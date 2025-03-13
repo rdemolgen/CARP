@@ -1,11 +1,24 @@
 # :tropical_fish:	 CARP :tropical_fish:	
-### Chromosome Abmormalities Represented in Python
+## Chromosome Abmormalities Represented in Python
 
-Respository for plotting:
+### Respository for plotting:
 - Copy number changes
 - B-allele frequency
 - Homozygosity
 - UPD
+
+### B-allele frequency (BAF)
+`allele_fraction.py` script generates baf plots.
+
+Required arguments
+- `-v`: Path to vcf file
+- `-l`: Genomic region to plot `<chr:start-end>` or `chr` for entire chromosome
+
+Optional
+- Use `--help` to show optional arguments
+
+Commands
+
 
 
 ```                                                                                                                                                                                  
