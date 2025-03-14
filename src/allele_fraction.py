@@ -28,7 +28,8 @@ class Allele_Fraction():
                 print(f"Generating single BAF plot for {self.samples} with {self.genotypes} genotype.")
                 self.single_sample_baf(samples, self.chrom, self.start, self.end, self.genotypes[0])
             elif len(self.samples) == len(self.genotypes):
-                print(f"Generating joint call BAF plot for {self.samples} with {self.genotypes} genotypes.")
+                print(f"Generating single and joint call BAF plots for {self.samples} with {self.genotypes} genotypes.")
+                self.run_single_plots()
                 self.joint_call_bcf(self.samples, self.chrom, self.start, self.end, self.genotypes)
             else:
                 print("Number of samples and genotypes do not match")
