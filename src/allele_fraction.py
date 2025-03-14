@@ -20,9 +20,13 @@ class Allele_Fraction():
 
         # Run automatic plot if no genotypes are given
         if self.genotypes is None:
-            print(f"Automatically generating single and join BAF plots for {self.samples}.")
-            self.run_single_plots()
-            self.run_joint_call_plots()
+            if len(self.samples) == 1:
+                print(f"Automatically generating single sample BAF plots for {self.samples}.")
+                self.run_single_plots()
+            else:
+                print(f"Automatically generating single sample and join BAF plots for {self.samples}.")
+                self.run_single_plots()
+                self.run_joint_call_plots()
         else:
             if len(self.samples) == 1 and len(self.genotypes) == 1:
                 print(f"Generating single BAF plot for {self.samples} with {self.genotypes} genotype.")
