@@ -275,7 +275,6 @@ def main():
     parser.add_argument('-dp', '--min_dp', type=int, required=False, default=10, help="Min variant read depth, default=10")
     parser.add_argument('-gq', '--min_gq', type=int, required=False, default=20, help="Min genotype quality score, default=20")
 
-
     # Parse args
     args = parser.parse_args()
 
@@ -290,33 +289,6 @@ def main():
         min_dp=args.min_dp,
         min_gq=args.min_gq
         )
-
-
-    # F07690
-    # AF.single_sample_baf("WGS_EX2403437", 15, genotype=None, outDir=None)
-    # AF.single_sample_baf("WGS_EX2403438", 15, genotype=None, outDir=None)
-    # AF.single_sample_baf("WGS_EX2403437", 15, genotype='0/1', outDir=None)
-    # AF.single_sample_baf("WGS_EX2403438", 15, genotype='0/1', outDir=None)
-    # AF.single_sample_baf("WGS_EX2403437", 15, genotype='1/1', outDir=None)
-    # AF.single_sample_baf("WGS_EX2403438", 15, genotype='1/1', outDir=None)
-    # AF.joint_call_bcf(
-    #     samples=["WGS_EX2403437", "WGS_EX2403438"],
-    #     chrom=15,
-    #     genotypes=["1/1", "0/1"],
-    #     outDir=None
-    # )
-    # AF.joint_call_bcf(
-    #     samples=["WGS_EX2403437", "WGS_EX2403438"],
-    #     chrom=15,
-    #     genotypes=["0/1", "0/1"],
-    #     outDir=None
-    # )
-    # AF.joint_call_bcf(
-    #     samples=["WGS_EX2403437", "WGS_EX2403438"],
-    #     chrom=15,
-    #     genotypes=["1/1", "1/1"],
-    #     outDir=None
-    # )
 
 if __name__ == '__main__':
     main()
