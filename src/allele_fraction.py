@@ -1,7 +1,7 @@
 import argparse
 import matplotlib.pyplot as plt
 import pysam
-import re
+import re, os
 
 class Allele_Fraction():
     '''This class include functions to identify variants and generate allele fractions'''
@@ -197,7 +197,8 @@ class Allele_Fraction():
         if outDir is None:
             outDir = ''
         else:
-            if outDir[-1] != '/': outDir + '/' 
+            if outDir[-1] != '/': outDir = outDir + '/' 
+            os.makedirs(outDir, exist_ok=True)
 
         # Save the plot as an image file
         output_filename = f"{outDir}{samp_geno_label}_{location}_BAF.png"
@@ -275,6 +276,7 @@ def main():
     parser.add_argument('-l', '--location', type=str, required=True, help="Genomic location either chr or chr:start-end")
     parser.add_argument('-s', '--samples', type=str, required=False, help="List of sample ids, starting with proband separated by spaces")
     parser.add_argument('-g', '--genotypes', type=str, required=False, help="List of genotypes matching the order of sample ids")
+    parser.add_argument('-o', '--outDir', type=str, required=False, help="Output directory for plots.")
     parser.add_argument('-f', '--no_filtering', action='store_true', required=False, help="Accept varaints with other non-PASS filters, default=False")
     parser.add_argument('-vq', '--min_qual', type=int, required=False, default=30, help="Min variant quality score, default=30")
     parser.add_argument('-dp', '--min_dp', type=int, required=False, default=10, help="Min variant read depth, default=10")
@@ -292,7 +294,8 @@ def main():
         no_filtering=args.no_filtering,
         min_qual=args.min_qual,
         min_dp=args.min_dp,
-        min_gq=args.min_gq
+        min_gq=args.min_gq,
+        outDir=args.outDir
         )
 
 if __name__ == '__main__':
