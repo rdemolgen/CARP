@@ -7,36 +7,45 @@ class Allele_Fraction():
     '''This class include functions to identify variants and generate allele fractions'''
 
     def __init__(self, vcfFile, location, no_filtering, min_qual, min_dp, min_gq,
-        samples=None, proband=None, mum=None, dad=None, proband_gt=None,
-        mum_gt=None, dad_gt=None):
+        samples=None, genotypes=None):
         self.vcfFile = vcfFile
         self.vcf = self.load_vcf()
         self.chrom, self.start, self.end = self.get_location(location)
-        self.family = self.define_family(proband, mum, dad)       
+        self.samples = self.get_samples(samples)
+        self.genotypes = self.genotypes(genotypes)
         self.no_filtering = no_filtering
         self.min_qual = min_qual # Phred score 99.9%
         self.min_dp = min_dp
         self.min_gq = min_gq # Phred score 99.0%
-        self.proband_gt = proband_gt
-        self.mum_gt = mum_gt
-        self.dad_gt = dad_gt
 
-    def define_family(self, proband, mum, dad):
-        '''Return family structure based on vcf file name or family member arguments'''
-        try:
-            if proband is None or mum is None or dad is None:
-                samples = re.findall('WGS_EX[0-9]{7}', self.vcfFile)
-                return {
-                    'proband': samples[0],
-                    'mum': samples[1],
-                    'dad': samples[2]}
+        # Run automatic plot if no genotypes are given
+        if self.genotypes is None:
+            print(f"Automatically generating single and join BAF plots for {self.samples}.")
+            self.run_single_plots()
+            self.run_joint_call_plots()
+        else:
+            if len(self.samples) == 1 and len(self.genotypes) == 1:
+                print(f"Generating single BAF plot for {self.samples} with {self.genotypes} genotype.")
+                self.single_sample_baf(samples, self.chrom, self.start, self.end, self.genotypes[0])
+            elif len(self.samples) == len(self.genotypes):
+                print(f"Generating joint call BAF plot for {self.samples} with {self.genotypes} genotypes.")
+                self.joint_call_bcf(self.samples, self.chrom, self.start, self.end, self.genotypes)
             else:
-                return {
-                    'proband': proband,
-                    'mum': mum,
-                    'dad': dad}
-        except IndexError:
-            pass
+                print("Number of samples and genotypes do not match")
+
+    def get_samples(self, samples):
+        '''Return list of samples, assuming proband is the first sample id'''
+        if samples == None:
+            return list(self.vcf.header.samples)
+        else:
+            return samples.split(' ')
+    
+    def genotypes(self, genotypes):
+        '''Return list of genotyes if given'''
+        if genotypes == None:
+            return None
+        else:
+            return genotypes.split(' ')
     
     def load_vcf(self):
         '''Create a pysam object from vcf file'''
@@ -90,9 +99,7 @@ class Allele_Fraction():
         if start is None: start = 1
         if end is None: end = self.get_chr_len(chrom)
 
-        print(chrom, start, end, gt)
-
-        for rec in self.vcf.fetch(str(chrom), start, end):
+        for rec in self.vcf.fetch(str(chrom), int(start), int(end)):
             sample_data = rec.samples[sample]
 
             if sample_data["GT"] != gt and gt != None:
@@ -115,8 +122,6 @@ class Allele_Fraction():
                 continue
 
             positions.append(rec.pos)
-        
-        print(len(positions))
 
         return {'id': sample, 'positions': positions, 'genotype': genotype}
 
@@ -127,7 +132,6 @@ class Allele_Fraction():
         for sample in sample_pos[1:]:
             intersect_pos &= set(sample['positions'])
         
-        print("LEN", len(intersect_pos))
         intersect_pos = list(intersect_pos)
         intersect_pos.sort()
 
@@ -145,18 +149,12 @@ class Allele_Fraction():
                     baf = ad[1] / sum(ad)  # Alt / (Ref + Alt) 
                     allele_fractions.append(baf)
                     variant_positions.append(pos)
-
-        print(len(allele_fractions))
         
         return (allele_fractions, variant_positions)
     
-    def plot_baf(self, plot_data, sample, chrom, start=1, end=None, genotype=None, outDir=None):
+    def plot_baf(self, plot_data, sample, chrom, start=1, end=None, genotype=None):
         # Extract plot data
         allele_fractions, variant_positions = plot_data
-        if outDir is None:
-            outDir = ''
-        elif outDir[-1] != '/':
-            outDir = outDIr + '/' 
 
         samp_geno_label = []
         if isinstance(sample, list) and isinstance(genotype, list):
@@ -169,10 +167,10 @@ class Allele_Fraction():
 
         samp_geno_label = '_'.join(samp_geno_label)
 
-        if start is 1 and end is None:
+        if (start == 1 or start is None) and end is None:
             location = f"chr{chrom}"
         else:
-            location = f"chr{chrom}:{start}-{end}"
+            location = f"chr{chrom}.{start}-{end}"
 
         # Plotting the Allele Fraction Scatter Plot
         plt.figure(figsize=(10, 6))
@@ -192,40 +190,85 @@ class Allele_Fraction():
         # plt.legend()
 
         # Save the plot as an image file
-        output_filename = f"{outDir}{samp_geno_label}_{location}_BAF.png"
+        output_filename = f"{samp_geno_label}_{location}_BAF.png"
         plt.savefig(output_filename, dpi=300, bbox_inches='tight')  # Save as high-quality PNG
         plt.close()  # Close the plot to prevent it from displaying in some environments
 
         print(f"Plot saved as {output_filename}")
     
-    def single_sample_baf(self, sample, chrom, start=1, end=None, genotype=None, outDir=None):
+    def single_sample_baf(self, sample, chrom, start=1, end=None, genotype=None):
+        '''Generate single sample baf plot'''
         var_pos = self.get_variants(sample, str(chrom), start, end, genotype)
         plot_data = self.calc_baf(sample, str(chrom), var_pos['positions'])
-        self.plot_baf(plot_data, sample, str(chrom), start, end, genotype, outDir)
+        self.plot_baf(plot_data, sample, str(chrom), start, end, genotype)
 
-    def joint_call_bcf(self, samples, chrom, start=1, end=None, genotypes=None, outDir=None):
+    def joint_call_bcf(self, samples, chrom, start=1, end=None, genotypes=None):
+        '''Generate joint call baf based on individual sample genotypes'''
         samples_var_pos = []
         for sample, genotype in zip(samples, genotypes):
-            samples_var_pos.append(self.get_variants(sample, str(chrom), start, end, genotype))
+            samples_var_pos.append(self.get_variants(sample, chrom, start, end, genotype))
         shared_positions = self.intersect_sample_variants(samples_var_pos)
         plot_data = self.calc_baf(samples[0], str(chrom), shared_positions)
-        self.plot_baf(plot_data, samples, str(chrom), start, end, genotypes, outDir)
+        self.plot_baf(plot_data, samples, str(chrom), start, end, genotypes)
+
+    def run_single_plots(self):
+        '''Automatically generate different genotype plots for each sample'''
+        genotypes = ['0/1', '1/1', 'all']
+
+        for sample in self.samples:
+            for genotype in genotypes:
+                # gt = self.get_genotype(genotype, False)
+                self.single_sample_baf(sample, self.chrom, self.start, self.end, genotype)
+    
+    def run_joint_call_plots(self):
+        '''Automatically generate joint call baf plots based on the number of samples given for typical scenarios'''
+        genotypes_combos = self.genotype_combinations(len(self.samples))
+        
+        for genotypes_combo in genotypes_combos:
+            samples_var_pos = []
+            for sample, genotype in zip(self.samples, genotypes_combo):
+                samples_var_pos.append(self.get_variants(sample, str(self.chrom), self.start, self.end, genotype))
+            shared_positions = self.intersect_sample_variants(samples_var_pos)
+            plot_data = self.calc_baf(self.samples[0], str(self.chrom), shared_positions)
+            self.plot_baf(plot_data, self.samples, str(self.chrom), self.start, self.end, genotypes_combo)
+    
+    def genotype_combinations(self, no_samples):
+        '''Return genotype combinations to automatically generate standard plots'''
+        if no_samples == 2:
+            return [
+                ['0/1', '0/0'],
+                ['0/1', '0/1'],
+                ['0/1', '1/1'],
+                ['1/1', '0/0'],
+                ['1/1', '0/1'],
+                ['1/1', '1/1']
+            ]
+        elif no_samples == 3:
+            return [
+                ['0/1', '0/0', '0/1'],
+                ['0/1', '0/0', '1/1'],
+                ['1/1', '0/0', '0/1'],
+                ['1/1', '0/0', '1/1'],
+                ['0/1', '0/1', '0/0'],
+                ['0/1', '1/1', '0/0'],
+                ['1/1', '0/1', '0/0'],
+                ['1/1', '1/1', '0/0']
+            ]
+        else:
+            return None
+
         
 def main():
     parser = argparse.ArgumentParser(description="")
     # Arguments
     parser.add_argument('-v', '--vcfFile', type=str, required=True, help="VCF file")
     parser.add_argument('-l', '--location', type=str, required=True, help="Genomic location either chr or chr:start-end")
-    parser.add_argument('-p', '--proband', type=str, required=False, help="Proband sample id")
-    parser.add_argument('-m', '--mum', type=str, required=False, help="Mums sample id")
-    parser.add_argument('-d', '--dad', type=str, required=False, help="Dads sample id")
-    parser.add_argument('-pg', '--proband_gt', type=str, required=False, help="Proband genotype")
-    parser.add_argument('-mg', '--mum_gt', type=str, required=False, help="Mums genotype")
-    parser.add_argument('-dg', '--dad_gt', type=str, required=False, help="Dads genotype")
+    parser.add_argument('-s', '--samples', type=str, required=False, help="List of sample ids, starting with proband separated by spaces")
+    parser.add_argument('-g', '--genotypes', type=str, required=False, help="List of genotypes matching the order of sample ids")
     parser.add_argument('-f', '--no_filtering', action='store_true', required=False, help="Accept varaints with other non-PASS filters, default=False")
-    parser.add_argument('-q', '--min_qual', type=int, required=False, default=30, help="Min variant quality score, default=30")
-    parser.add_argument('-r', '--min_dp', type=int, required=False, default=10, help="Min variant read depth, default=10")
-    parser.add_argument('-g', '--min_gq', type=int, required=False, default=20, help="Min genotype quality score, default=20")
+    parser.add_argument('-vq', '--min_qual', type=int, required=False, default=30, help="Min variant quality score, default=30")
+    parser.add_argument('-dp', '--min_dp', type=int, required=False, default=10, help="Min variant read depth, default=10")
+    parser.add_argument('-gq', '--min_gq', type=int, required=False, default=20, help="Min genotype quality score, default=20")
 
 
     # Parse args
@@ -235,12 +278,8 @@ def main():
     AF = Allele_Fraction(
         vcfFile=args.vcfFile,
         location=args.location,
-        proband=args.proband,
-        mum=args.mum,
-        dad=args.dad,
-        proband_gt=args.proband_gt,
-        mum_gt=args.mum_gt,
-        dad_gt=args.dad_gt,
+        samples=args.samples,
+        genotypes=args.genotypes,
         no_filtering=args.no_filtering,
         min_qual=args.min_qual,
         min_dp=args.min_dp,
@@ -249,30 +288,30 @@ def main():
 
 
     # F07690
-    AF.single_sample_baf("WGS_EX2403437", 15, genotype=None, outDir=None)
-    AF.single_sample_baf("WGS_EX2403438", 15, genotype=None, outDir=None)
-    AF.single_sample_baf("WGS_EX2403437", 15, genotype='0/1', outDir=None)
-    AF.single_sample_baf("WGS_EX2403438", 15, genotype='0/1', outDir=None)
-    AF.single_sample_baf("WGS_EX2403437", 15, genotype='1/1', outDir=None)
-    AF.single_sample_baf("WGS_EX2403438", 15, genotype='1/1', outDir=None)
-    AF.joint_call_bcf(
-        samples=["WGS_EX2403437", "WGS_EX2403438"],
-        chrom=15,
-        genotypes=["1/1", "0/1"],
-        outDir=None
-    )
-    AF.joint_call_bcf(
-        samples=["WGS_EX2403437", "WGS_EX2403438"],
-        chrom=15,
-        genotypes=["0/1", "0/1"],
-        outDir=None
-    )
-    AF.joint_call_bcf(
-        samples=["WGS_EX2403437", "WGS_EX2403438"],
-        chrom=15,
-        genotypes=["1/1", "1/1"],
-        outDir=None
-    )
+    # AF.single_sample_baf("WGS_EX2403437", 15, genotype=None, outDir=None)
+    # AF.single_sample_baf("WGS_EX2403438", 15, genotype=None, outDir=None)
+    # AF.single_sample_baf("WGS_EX2403437", 15, genotype='0/1', outDir=None)
+    # AF.single_sample_baf("WGS_EX2403438", 15, genotype='0/1', outDir=None)
+    # AF.single_sample_baf("WGS_EX2403437", 15, genotype='1/1', outDir=None)
+    # AF.single_sample_baf("WGS_EX2403438", 15, genotype='1/1', outDir=None)
+    # AF.joint_call_bcf(
+    #     samples=["WGS_EX2403437", "WGS_EX2403438"],
+    #     chrom=15,
+    #     genotypes=["1/1", "0/1"],
+    #     outDir=None
+    # )
+    # AF.joint_call_bcf(
+    #     samples=["WGS_EX2403437", "WGS_EX2403438"],
+    #     chrom=15,
+    #     genotypes=["0/1", "0/1"],
+    #     outDir=None
+    # )
+    # AF.joint_call_bcf(
+    #     samples=["WGS_EX2403437", "WGS_EX2403438"],
+    #     chrom=15,
+    #     genotypes=["1/1", "1/1"],
+    #     outDir=None
+    # )
 
 if __name__ == '__main__':
     main()
