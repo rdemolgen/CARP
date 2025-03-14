@@ -7,7 +7,7 @@ class Allele_Fraction():
     '''This class include functions to identify variants and generate allele fractions'''
 
     def __init__(self, vcfFile, location, no_filtering, min_qual, min_dp, min_gq,
-        samples=None, genotypes=None):
+        samples=None, genotypes=None, outDir=None):
         self.vcfFile = vcfFile
         self.vcf = self.load_vcf()
         self.chrom, self.start, self.end = self.get_location(location)
@@ -17,6 +17,7 @@ class Allele_Fraction():
         self.min_qual = min_qual # Phred score 99.9%
         self.min_dp = min_dp
         self.min_gq = min_gq # Phred score 99.0%
+        self.outDir = outDir
 
         # Run automatic plot if no genotypes are given
         if self.genotypes is None:
@@ -24,17 +25,16 @@ class Allele_Fraction():
                 print(f"Automatically generating single sample BAF plots for {self.samples}.")
                 self.run_single_plots()
             else:
-                print(f"Automatically generating single sample and join BAF plots for {self.samples}.")
+                print(f"Automatically generating single sample and joint BAF plots for {self.samples}.")
                 self.run_single_plots()
                 self.run_joint_call_plots()
         else:
             if len(self.samples) == 1 and len(self.genotypes) == 1:
                 print(f"Generating single BAF plot for {self.samples} with {self.genotypes} genotype.")
-                self.single_sample_baf(samples, self.chrom, self.start, self.end, self.genotypes[0])
+                self.single_sample_baf(samples, self.chrom, self.start, self.end, self.genotypes[0], self.outDir)
             elif len(self.samples) == len(self.genotypes):
-                print(f"Generating single and joint call BAF plots for {self.samples} with {self.genotypes} genotypes.")
-                self.run_single_plots()
-                self.joint_call_bcf(self.samples, self.chrom, self.start, self.end, self.genotypes)
+                print(f"Generating joint call BAF plots for {self.samples} with {self.genotypes} genotypes.")
+                self.joint_call_bcf(self.samples, self.chrom, self.start, self.end, self.genotypes, self.outDir)
             else:
                 print("Number of samples and genotypes do not match")
 
@@ -157,7 +157,7 @@ class Allele_Fraction():
         
         return (allele_fractions, variant_positions)
     
-    def plot_baf(self, plot_data, sample, chrom, start=1, end=None, genotype=None):
+    def plot_baf(self, plot_data, sample, chrom, start=1, end=None, genotype=None, outDir=None):
         # Extract plot data
         allele_fractions, variant_positions = plot_data
 
@@ -194,27 +194,32 @@ class Allele_Fraction():
         plt.ylim(-0.1, 1.1)  # AF values range between 0 and 1
         # plt.legend()
 
+        if outDir is None:
+            outDir = ''
+        else:
+            if outDir[-1] != '/': outDir + '/' 
+
         # Save the plot as an image file
-        output_filename = f"{samp_geno_label}_{location}_BAF.png"
+        output_filename = f"{outDir}{samp_geno_label}_{location}_BAF.png"
         plt.savefig(output_filename, dpi=300, bbox_inches='tight')  # Save as high-quality PNG
         plt.close()  # Close the plot to prevent it from displaying in some environments
 
         print(f"Plot saved as {output_filename}")
     
-    def single_sample_baf(self, sample, chrom, start=1, end=None, genotype=None):
+    def single_sample_baf(self, sample, chrom, start=1, end=None, genotype=None, outDir=None):
         '''Generate single sample baf plot'''
         var_pos = self.get_variants(sample, str(chrom), start, end, genotype)
         plot_data = self.calc_baf(sample, str(chrom), var_pos['positions'])
-        self.plot_baf(plot_data, sample, str(chrom), start, end, genotype)
+        self.plot_baf(plot_data, sample, str(chrom), start, end, genotype, outDir)
 
-    def joint_call_bcf(self, samples, chrom, start=1, end=None, genotypes=None):
+    def joint_call_bcf(self, samples, chrom, start=1, end=None, genotypes=None, outDir=None):
         '''Generate joint call baf based on individual sample genotypes'''
         samples_var_pos = []
         for sample, genotype in zip(samples, genotypes):
             samples_var_pos.append(self.get_variants(sample, chrom, start, end, genotype))
         shared_positions = self.intersect_sample_variants(samples_var_pos)
         plot_data = self.calc_baf(samples[0], str(chrom), shared_positions)
-        self.plot_baf(plot_data, samples, str(chrom), start, end, genotypes)
+        self.plot_baf(plot_data, samples, str(chrom), start, end, genotypes, outDir)
 
     def run_single_plots(self):
         '''Automatically generate different genotype plots for each sample'''
@@ -223,7 +228,7 @@ class Allele_Fraction():
         for sample in self.samples:
             for genotype in genotypes:
                 # gt = self.get_genotype(genotype, False)
-                self.single_sample_baf(sample, self.chrom, self.start, self.end, genotype)
+                self.single_sample_baf(sample, self.chrom, self.start, self.end, genotype, self.outDir)
     
     def run_joint_call_plots(self):
         '''Automatically generate joint call baf plots based on the number of samples given for typical scenarios'''
@@ -235,7 +240,7 @@ class Allele_Fraction():
                 samples_var_pos.append(self.get_variants(sample, str(self.chrom), self.start, self.end, genotype))
             shared_positions = self.intersect_sample_variants(samples_var_pos)
             plot_data = self.calc_baf(self.samples[0], str(self.chrom), shared_positions)
-            self.plot_baf(plot_data, self.samples, str(self.chrom), self.start, self.end, genotypes_combo)
+            self.plot_baf(plot_data, self.samples, str(self.chrom), self.start, self.end, genotypes_combo, self.outDir)
     
     def genotype_combinations(self, no_samples):
         '''Return genotype combinations to automatically generate standard plots'''
