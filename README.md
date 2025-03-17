@@ -1,5 +1,5 @@
 # :tropical_fish:	 CARP :tropical_fish:	
-### Chromosome Abmormalities Represented in Python
+### Chromosome Abmormality Reports
 
 Respository for plotting:
 - Copy number changes
