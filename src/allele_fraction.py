@@ -376,7 +376,8 @@ def main():
         min_gq=args.min_gq,
         min_mq=args.min_mq,
         min_qd=args.min_qd,
-        outDir=args.outDir
+        outDir=args.outDir,
+        mode='baf'
         )
 
 if __name__ == '__main__':
