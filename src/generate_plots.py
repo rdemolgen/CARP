@@ -16,7 +16,7 @@ def make_genome_ideogram(AF, genome_baf, Dosage):
     '''
     n_rows, n_cols = 2, 1
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(24, 12), layout="compressed", sharex=True)
-    axes[0].set_ylim([0, 2])
+    axes[0].set_ylim([-0.1, 2.1])
     axes[0].set_yticks(np.arange(0, 2, 0.25))
     Dosage.plot_ideogram_ax(axes[0])
     # Set custom Y-axis ticks
@@ -79,11 +79,9 @@ def find_file(regex_pattern):
     reg_files = [f for f in os.listdir('../test_files/') if re.match(regex_pattern, f)]
 
     if len(reg_files) > 1:
-        print("Error: More than one file found matching the regex pattern " + regex_pattern)
-        pass
+        sys.exit("Error: More than one file found matching the regex pattern " + regex_pattern)
     elif len(reg_files) == 0:
-        print("Error: No file found matching the glob string" + regex_pattern)
-        pass
+        sys.exit("Error: No file found matching the regex pattern" + regex_pattern)
     else:
         file_path = os.path.join('../test_files/', reg_files[0])
         return file_path
@@ -138,6 +136,19 @@ def main():
 
     if args.mode == 'ideogram':
         # Generate ideogram plots
+        read_depth_files = {}
+        cnvs_files = {}
+        for sample in AF.samples:
+            # try and find the cnv files first to avoid waiting ages to load the BAF data unecessarily
+            print(f"Finding CNV files for {sample}")
+            data_pat = rf'^{re.escape(sample)}.*\.50000.data$'
+            readDepthFile = find_file(data_pat)
+            cnvs_pat = rf'^cnvs_{re.escape(sample)}.*\.50000$'
+            cnvsFile = find_file(cnvs_pat)
+            read_depth_files[sample] = readDepthFile
+            cnvs_files[sample] = cnvsFile
+            print(f"Loaded {cnvsFile} and {readDepthFile}")
+
         sample_genome_baf = {}
         dosage_dict = {}
         for sample in AF.samples:
@@ -150,16 +161,9 @@ def main():
                 print(f"Loading Chromosome {args.location} BAF for {sample}")
                 baf = AF.get_plot_data(sample, args.location, 1, None, 'all')
 
-            print(f"Finding CNV files for {sample}")
-            data_pat = rf'^{re.escape(sample)}.*\.50000.data$'
-            readDepthFile = find_file(data_pat)
-            cnvs_pat = rf'^cnvs_{re.escape(sample)}.*\.50000$'
-            cnvsFile = find_file(cnvs_pat)
-            print(f"Loaded {cnvsFile} and {readDepthFile}")
-
             Dosage = Sample_Dosage(
-                readDepthFile=readDepthFile,
-                cnvsFile=cnvsFile,
+                readDepthFile=read_depth_files[sample],
+                cnvsFile=cnvs_files[sample],
                 cytobandsFile='../hg38_cytoBand.txt',
                 sample=sample,
                 family=args.family,
