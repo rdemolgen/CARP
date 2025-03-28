@@ -151,10 +151,10 @@ def main():
                 baf = AF.get_plot_data(sample, args.location, 1, None, 'all')
 
             print(f"Finding CNV files for {sample}")
-            cnvs_pat = rf'^cnvs_{re.escape(sample)}.*\.50000$'
-            readDepthFile = find_file(cnvs_pat)
             data_pat = rf'^{re.escape(sample)}.*\.50000.data$'
-            cnvsFile = find_file(data_pat)
+            readDepthFile = find_file(data_pat)
+            cnvs_pat = rf'^cnvs_{re.escape(sample)}.*\.50000$'
+            cnvsFile = find_file(cnvs_pat)
             print(f"Loaded {cnvsFile} and {readDepthFile}")
 
             Dosage = Sample_Dosage(
@@ -173,14 +173,16 @@ def main():
         date=now.strftime('%Y-%m-%d')
 
         if args.location == 'all':
+            print("Generating whole genome ideogram PDF report")
             chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
             pdf_name = f"{args.family}_genome_ideogram_{date}.pdf"
+            pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, args.proband_id)
         else:
-            chrs = [args.location]
-            pdf_name = f"{args.family}_chr{args.location}_ideogram_{date}.pdf"
-
-        print("Generating whole genome ideogram PDF report")
-        pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, args.proband_id)
+            print(f"Generating ideogram for Chromosome {args.location}")
+            make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, args.location)
+            outname = f"{args.family}_chr{args.location}_ideogram_{date}.png"
+            plt.savefig(outname)
+            plt.close('all')
 
     elif args.mode == 'dosage':
         print(f'Running in {args.mode} mode')
