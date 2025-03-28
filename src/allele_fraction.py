@@ -343,7 +343,7 @@ class Allele_Fraction():
         # lables for chromosomes
         for num, (name, group) in enumerate(grouped_depth):
             # plot each group (chromosome) and colour using the color pallete
-            group.plot(kind='scatter', x='genome_coordinate', y='allele_fraction',color=colours[num % len(colours)], ax=ax, legend=None, s=0.001, rasterized=True)
+            group.plot(kind='scatter', x='genome_coordinate', y='allele_fraction',color=colours[num % len(colours)], ax=ax, legend=None, s=0.002, rasterized=True)
         return ax
 
 def main():
