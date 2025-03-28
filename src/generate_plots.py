@@ -1,16 +1,13 @@
 from allele_fraction import Allele_Fraction
 from savvycnv_dosage import Sample_Dosage
-import sys
 import pandas as pd
 from collections import OrderedDict
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
-import glob
-import argparse
-import glob, math
 from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
+import math, argparse, re, os, sys
 
 def make_genome_ideogram(AF, genome_baf, Dosage):
     '''  
@@ -74,25 +71,27 @@ def pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, proband):
 
 # move the cytobands stuff to it's own section to avoid repeating with every Class object
 
-def find_file(glob_string):
+def find_file(regex_pattern):
     '''  
         Find a file based on the provied glob_string, e.g. 'WGS_EX1234567*data'
         Error if the file can't be found or if there are duplicates of the file
     '''
-    glob_file = glob.glob(glob_string)
-    if len(glob_file) > 1:
-        print("Error: More than one file found matching the glob string " + glob_string)
+    reg_files = [f for f in os.listdir('../test_files/') if re.match(regex_pattern, f)]
+
+    if len(reg_files) > 1:
+        print("Error: More than one file found matching the regex pattern " + regex_pattern)
         pass
-    elif len(glob_file) == 0:
-        print("Error: No file found matching the glob string" + glob_string)
+    elif len(reg_files) == 0:
+        print("Error: No file found matching the glob string" + regex_pattern)
         pass
     else:
-        return glob_file[0]
+        file_path = os.path.join('../test_files/', reg_files[0])
+        return file_path
 
 def main():
     parser = argparse.ArgumentParser(description="")
     # Arguments
-    parser.add_argument('-v', '--vcfFile', type=str, required=True, help="VCF file")
+    parser.add_argument('-v', '--vcfFile', type=str, required=False, help="VCF file")
     parser.add_argument('-l', '--location', type=str, required=True, help="Genomic location either chr or chr:start-end")
     parser.add_argument('-s', '--samples', type=str, required=False, help="List of sample ids, starting with proband separated by spaces")
     parser.add_argument('-g', '--genotypes', type=str, required=False, help="List of genotypes matching the order of sample ids")
@@ -112,12 +111,18 @@ def main():
 
     if args.mode != 'dosage':
         print(f'Running in {args.mode} mode')
+
+        print(f"Finding family VCF files for {args.proband_id}")
+        vcf_pat = rf'^(?!.*gnomad_filtered).*{re.escape(args.proband_id)}.*\.vcf\.gz$'
+        vcfFile = find_file(vcf_pat)
+        print(f"Loaded {vcfFile}")
+
         if args.mode == 'baf' and str(args.location) == 'all':
             sys.exit('Please enter chromosome or coordinates when running in BAF mode (e.g. )')
         # populate an Allele_Fraction object in baf and ideogram mode
         # baf mode will auto-generate the baf plots. ideogram mode will just populate the class
         AF = Allele_Fraction(
-            vcfFile=args.vcfFile,
+            vcfFile=vcfFile,
             location=args.location,
             samples=args.samples,
             genotypes=args.genotypes,
@@ -146,8 +151,11 @@ def main():
                 baf = AF.get_plot_data(sample, args.location, 1, None, 'all')
 
             print(f"Finding CNV files for {sample}")
-            readDepthFile = find_file('../' + sample + '*data')
-            cnvsFile = find_file('../cnvs_' + sample + '*')
+            cnvs_pat = rf'^cnvs_{re.escape(sample)}.*\.50000$'
+            readDepthFile = find_file(cnvs_pat)
+            data_pat = rf'^{re.escape(sample)}.*\.50000.data$'
+            cnvsFile = find_file(data_pat)
+            print(f"Loaded {cnvsFile} and {readDepthFile}")
 
             Dosage = Sample_Dosage(
                 readDepthFile=readDepthFile,
@@ -165,16 +173,15 @@ def main():
         date=now.strftime('%Y-%m-%d')
 
         if args.location == 'all':
-            print("Generating whole genome ideogram PDF report")
             chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
             pdf_name = f"{args.family}_genome_ideogram_{date}.pdf"
-            pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, args.proband_id)
         else:
-            print(f"Generating ideogram for Chromosome {args.location}")
-            make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, args.location)
-            outname = f"{args.family}_chr{args.location}_ideogram_{date}.png"
-            plt.savefig(outname)
-            plt.close('all')
+            chrs = [args.location]
+            pdf_name = f"{args.family}_chr{args.location}_ideogram_{date}.pdf"
+
+        print("Generating whole genome ideogram PDF report")
+        pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, args.proband_id)
+
     elif args.mode == 'dosage':
         print(f'Running in {args.mode} mode')
 
