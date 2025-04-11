@@ -19,7 +19,6 @@ There are 3 modes for generating plots:
 - dosage: directly controls `savvycnv_dosage.py`. Use for generating coverage plots
 
 **Required arguments**
-- `-v`: Path to vcf file (requires `vcf.gz.tbi` file)
 - `-l`: Genomic region to plot `<chr:start-end>` or `chr` for entire chromosome.
 - `-fam`: Family number
 - `-p`: Proband ID
@@ -35,6 +34,26 @@ There are 3 modes for generating plots:
 - `-gq`: Variant genotype quality threshold, default=20.
 - `-mq`: Variant mapping quality threshold, default=40.
 - `-qd`: Variant qual-vy-depth threshold, default=2.
+
+**Examples**
+#### ideogram mode
+1. Generate PDF report containing whole genome ideogram for proband, plus per-chromosome ideograms for all family members, using default parameters
+`python generate_plots.py -l all -fam F09999 -p WGS_EX4440000 -m ideogram`
+2. Same as 1., but with changes to the SNP filtering
+`python generate_plots.py -l all -fam F09999 -vq 60 -gq 20 --mq 60 --dp 10 -qd 10 -p WGS_EX4440000 -m ideogram`
+3. Generate PNG ideogram for chromosome 16 only
+`python generate_plots.py -l 16 -fam F09999 -vq 60 -gq 20 --mq 60 --dp 10 -qd 10 -p WGS_EX4440000 -m ideogram`
+4. Generate PDF report for a single sample from a joint-called family
+`python generate_plots.py -l 16 -s WGS_EX4440000 -fam F09999 -vq 60 -gq 20 --mq 60 --dp 10 -qd 10 -p WGS_EX4440000 -m ideogram`
+
+#### baf mode
+1. Generate BAF plots for a single sample for a specific genomic region
+`python generate_plots.py -l 12:110000000-112000000 -fam F09999  -s WGS_EX4440000 --proband WGS_EX4440000 --mode baf`
+2. Generate BAF plots for all samples for a single chromosome
+`python generate_plots.py -l 12:110000000-112000000 -fam F09999 --proband WGS_EX4440000 --mode baf`
+
+#### baf mode
+Watch this space
 
 #### B-allele frequency (BAF)
 The BAF script uses a VCF file to generate individual sample BAF plots and/or joint sample BAF plots.
