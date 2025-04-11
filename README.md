@@ -26,7 +26,7 @@ There are 3 modes for generating plots:
 The software looks for these files in a sub-directory named `test_files/`
 
 **Required arguments**
-- `-l`: Genomic region to plot `<chr:start-end>` or `chr` for entire chromosome.
+- `-l`: Genomic region to plot `all` will plot across the entire genome. Alternatively, use `<chr:start-end>` for a specific region or `<chr>` for a single chromosome.
 - `-fam`: Family number
 - `-p`: Proband ID
 - `-m`: Mode. Valid values are `baf`, `ideogram`, `dosage`
