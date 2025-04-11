@@ -190,7 +190,7 @@ class Allele_Fraction():
 
         return (allele_fractions, variant_positions)
 
-    def plot_baf(self, plot_data, sample, chrom, ax=None, start=1, end=None, genotype=None, outDir=None):
+    def plot_baf(self, plot_data, sample, chrom, capture='genome', ax=None, start=1, end=None, genotype=None, outDir=None):
         # Extract plot data
         try:
             allele_fractions, variant_positions = plot_data
@@ -214,6 +214,8 @@ class Allele_Fraction():
         else:
             location = f"chr{chrom}.{start}-{end}"
 
+        # dot size
+        dot_size = 5 if capture == 'genome' else 10
         # Plotting the Allele Fraction Scatter Plot
         # Set custom Y-axis ticks
         custom_ticks = [0, 0.25, 0.337, 0.5, 0.667, 0.75, 1]
@@ -231,7 +233,7 @@ class Allele_Fraction():
             pltAx.set_ylabel("Allele Fraction")
             pltAx.set_ylim(-0.1, 1.1)  # AF values range between 0 and 1
             pltAx.set_xlim(left=0)
-        pltAx.scatter(variant_positions, allele_fractions, s=5, alpha=0.3, color='purple', edgecolors='purple', rasterized=True)
+        pltAx.scatter(variant_positions, allele_fractions, s=dot_size, alpha=0.3, color='purple', edgecolors='purple', rasterized=True)
         pltAx.axhline(0.667, color='black', linestyle='dashed', linewidth=1)
         pltAx.axhline(0.5, color='black', linestyle='dashed', linewidth=1)
         pltAx.axhline(0.337, color='black', linestyle='dashed', linewidth=1)
@@ -260,7 +262,7 @@ class Allele_Fraction():
         '''Generate single sample baf plot'''
         # var_pos = self.get_variants(sample, str(chrom), start, end, genotype)
         # plot_data = self.calc_baf(sample, str(chrom), var_pos['positions'])
-        self.plot_baf(plot_data, sample, str(chrom), start=start, end=end, genotype=genotype, outDir=outDir)
+        self.plot_baf(plot_data, sample, str(chrom), capture='genome', start=start, end=end, genotype=genotype, outDir=outDir)
 
     def joint_call_bcf(self, samples, chrom, start=1, end=None, genotypes=None, outDir=None):
         '''Generate joint call baf based on individual sample genotypes'''
@@ -269,7 +271,7 @@ class Allele_Fraction():
             samples_var_pos.append(self.get_variants(sample, chrom, start, end, genotype))
         shared_positions = self.intersect_sample_variants(samples_var_pos)
         plot_data = self.calc_baf(samples[0], str(chrom), shared_positions)
-        self.plot_baf(plot_data, samples, str(chrom), start=start, end=end, genotype=genotypes, outDir=outDir)
+        self.plot_baf(plot_data, samples, str(chrom), capture='genome', start=start, end=end, genotype=genotypes, outDir=outDir)
 
     def run_single_plots(self):
         '''Automatically generate different genotype plots for each sample'''
@@ -291,7 +293,7 @@ class Allele_Fraction():
                 samples_var_pos.append(self.get_variants(sample, str(self.chrom), self.start, self.end, genotype))
             shared_positions = self.intersect_sample_variants(samples_var_pos)
             plot_data = self.calc_baf(self.samples[0], str(self.chrom), shared_positions)
-            self.plot_baf(plot_data, self.samples, str(self.chrom), start=self.start, end=self.end, genotype=genotypes_combo, outDir=self.outDir)
+            self.plot_baf(plot_data, self.samples, str(self.chrom), capture='genome', start=self.start, end=self.end, genotype=genotypes_combo, outDir=self.outDir)
             
     
     def genotype_combinations(self, no_samples):
@@ -338,12 +340,14 @@ class Allele_Fraction():
         grouped_baf = self.call_group_and_get_cumulative(genome_baf, baf_cumulative_position)
         return grouped_baf
 
-    def plot_baf_ideogram(self, ax, grouped_depth):
+    def plot_baf_ideogram(self, ax, grouped_depth, capture):
         colours = ['#4477AA', '#EE6677']
+        # dot size
+        dot_size = 0.002 if capture == 'genome' else 4
         # lables for chromosomes
         for num, (name, group) in enumerate(grouped_depth):
             # plot each group (chromosome) and colour using the color pallete
-            group.plot(kind='scatter', x='genome_coordinate', y='allele_fraction',color=colours[num % len(colours)], ax=ax, legend=None, s=0.002, rasterized=True)
+            group.plot(kind='scatter', x='genome_coordinate', y='allele_fraction',color=colours[num % len(colours)], ax=ax, legend=None, s=dot_size, rasterized=True)
         return ax
 
 def main():

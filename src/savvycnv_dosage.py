@@ -121,8 +121,10 @@ class Sample_Dosage():
         grouped_read_depth = self.group_and_get_cumulative(low_noise, cumulative_genome_position, 'bin_end')
         return grouped_read_depth
 
-    def plot_ideogram_ax(self, ax):
+    def plot_ideogram_ax(self, ax, capture):
         colours = ['#4477AA', '#EE6677']
+        # dot size
+        dot_size = 5 if capture == 'genome' else 7
         # lables for chromosomes
         x_labels = []
         x_labels_pos = []
@@ -130,7 +132,7 @@ class Sample_Dosage():
             # plot noise first
             ax.fill_between(group['genome_coordinate'], group['stdev_neg'],group['stdev_pos'], color='#CCBB44')
             # plot each group (chromosome) and colour using the color pallete
-            group.plot(kind='scatter', x='genome_coordinate', y='dosage',color=colours[num % len(colours)], ax=ax, legend=None, s=5, rasterized=True)
+            group.plot(kind='scatter', x='genome_coordinate', y='dosage',color=colours[num % len(colours)], ax=ax, legend=None, s=dot_size, rasterized=True)
             x_labels.append(name)
             x_labels_pos.append((group['genome_coordinate'].iloc[-1] - (group['genome_coordinate'].iloc[-1] - group['genome_coordinate'].iloc[0])/2))
         ax.set_xlim([0, len(self.grouped_read_depth)])
@@ -139,9 +141,11 @@ class Sample_Dosage():
         ax.set_title(self.family + ', noise cut-off = ' + str(self.noiseCutoff))
         return ax
 
-    def plot_chr_ideogram_ax(self, ax, dosage_data):
+    def plot_chr_ideogram_ax(self, ax, dosage_data, capture):
+        # dot size
+        dot_size = 5 if capture == 'genome' else 8
         ax.fill_between(dosage_data['bin_end'], dosage_data['stdev_neg'],dosage_data['stdev_pos'], color='#CCBB44')
-        ax.scatter(dosage_data['bin_end'], dosage_data['dosage'], s=5, rasterized=True)
+        ax.scatter(dosage_data['bin_end'], dosage_data['dosage'], s=dot_size, rasterized=True)
         ax.set_ylabel("Dosage")
         ax.set_ylim(-0.1, 2.1)  # AF values range between 0 and 1
         ax.set_xlim(left=0)

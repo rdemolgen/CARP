@@ -9,7 +9,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
 import math, argparse, re, os, sys
 
-def make_genome_ideogram(AF, genome_baf, Dosage):
+def make_genome_ideogram(AF, genome_baf, Dosage, capture):
     '''  
         Plot dosage,baf ideograms for the whole genome and return the plt object
         Allows you to dump in a PDF file or save as an image 
@@ -18,15 +18,15 @@ def make_genome_ideogram(AF, genome_baf, Dosage):
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(24, 12), layout="compressed", sharex=True)
     axes[0].set_ylim([-0.1, 2.1])
     axes[0].set_yticks(np.arange(0, 2, 0.25))
-    Dosage.plot_ideogram_ax(axes[0])
+    Dosage.plot_ideogram_ax(axes[0], capture)
     # Set custom Y-axis ticks
     custom_ticks = [0, 0.25, 0.337, 0.5, 0.667, 0.75, 1]
     axes[1].set_yticks(custom_ticks, labels=[str(tick) for tick in custom_ticks])
-    AF.plot_baf_ideogram(axes[1], genome_baf)
+    AF.plot_baf_ideogram(axes[1], genome_baf, capture)
     plt.tight_layout()
     return plt
 
-def make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, chr):
+def make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, chr, capture):
     '''  
         Plot dosage,baf ideograms for each chromosome and return the plt object
         Allows you to dump in a PDF file or save as an image 
@@ -39,33 +39,33 @@ def make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, chr):
         for outerind, subfig in enumerate(subfigs.flat):
             sample = AF.samples[outerind]
             axs = subfig.subplots(2, 1, sharex=True)
-            dosage_dict[sample].plot_chr_ideogram_ax(axs[0], dosage_dict[sample].grouped_read_depth.get_group(chr))
+            dosage_dict[sample].plot_chr_ideogram_ax(axs[0], dosage_dict[sample].grouped_read_depth.get_group(chr), capture)
             try:
-                AF.plot_baf(sample_genome_baf[sample].get_group(chr), sample, chr, ax=axs[1], genotype='all')
+                AF.plot_baf(sample_genome_baf[sample].get_group(chr), capture, sample, chr, ax=axs[1], genotype='all')
             except AttributeError:
-                AF.plot_baf(sample_genome_baf[sample], sample, chr, ax=axs[1], genotype='all')
+                AF.plot_baf(sample_genome_baf[sample], sample, chr, capture, ax=axs[1], genotype='all')
     else:
         sample = AF.samples[0]
         axs = fig.subplots(2, 1, sharex=True)
-        dosage_dict[sample].plot_chr_ideogram_ax(axs[0], dosage_dict[sample].grouped_read_depth.get_group(chr))
+        dosage_dict[sample].plot_chr_ideogram_ax(axs[0], dosage_dict[sample].grouped_read_depth.get_group(chr), capture)
         try:
-            AF.plot_baf(sample_genome_baf[sample].get_group(chr), sample, chr, ax=axs[1], genotype='all')
+            AF.plot_baf(sample_genome_baf[sample].get_group(chr), sample, chr, capture, ax=axs[1], genotype='all')
         except AttributeError:
-            AF.plot_baf(sample_genome_baf[sample], sample, chr, ax=axs[1], genotype='all')
+            AF.plot_baf(sample_genome_baf[sample], sample, chr, capture, ax=axs[1], genotype='all')
     plt.subplots_adjust(wspace=0, hspace=0)
     return plt
 
-def pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, proband):
+def pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, proband, capture):
     '''  
         Generate a PDF report containing dosage,baf ideograms for the whole genome (proband)
         and for each chromosome (all family members)
     '''
     with PdfPages(pdf_name) as pdf:
-        plt = make_genome_ideogram(AF, sample_genome_baf[proband], dosage_dict[proband])
+        plt = make_genome_ideogram(AF, sample_genome_baf[proband], dosage_dict[proband], capture)
         pdf.savefig()
         plt.close()
         for c in chrs:
-            plt = make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, c)
+            plt = make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, c, capture)
             pdf.savefig()
             plt.close()
 
@@ -106,6 +106,8 @@ def main():
 
     # Parse args
     args = parser.parse_args()
+
+    capture = 'exome' if args.proband_id.startswith('TwEx') else 'genome'
 
     if args.mode != 'dosage':
         print(f'Running in {args.mode} mode')
@@ -180,16 +182,17 @@ def main():
             print("Generating whole genome ideogram PDF report")
             chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
             pdf_name = f"{args.family}_genome_ideogram_{date}.pdf"
-            pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, args.proband_id)
+            pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, args.proband_id, capture)
         else:
             print(f"Generating ideogram for Chromosome {args.location}")
-            make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, args.location)
+            make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, args.location, capture)
             outname = f"{args.family}_chr{args.location}_ideogram_{date}.png"
             plt.savefig(outname)
             plt.close('all')
 
     elif args.mode == 'dosage':
-        print(f'Running in {args.mode} mode')
+        print(f'{args.mode} mode is not currently surpported. sorry.')
+        # print(f'Running in {args.mode} mode')
 
 if __name__ == '__main__':
     main()
