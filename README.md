@@ -18,6 +18,13 @@ There are 3 modes for generating plots:
 - ideogram: to generate combined BAF/Dosage ideograms for the whole genome (set `-l` to 'all') or a single chromosome
 - dosage: directly controls `savvycnv_dosage.py`. Use for generating coverage plots
 
+**Required files**
+- VCF file (bgzipped) and associated TBI index
+- SavvyCNV CNV calls for each individual. File must be named in the format `cnvs_<sampleID>.50000`
+- SavvyCNV data files containing per-bin metrics. File must be named in the format `<sampleID>.coverageBinner.50000.data`
+
+The software looks for these files in a sub-directory named `test_files/`
+
 **Required arguments**
 - `-l`: Genomic region to plot `<chr:start-end>` or `chr` for entire chromosome.
 - `-fam`: Family number
