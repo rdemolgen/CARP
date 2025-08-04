@@ -26,33 +26,45 @@ def make_genome_ideogram(AF, genome_baf, Dosage, capture):
     plt.tight_layout()
     return plt
 
-def make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, chr, capture):
+def make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, chr, capture, proband):
     '''  
         Plot dosage,baf ideograms for each chromosome and return the plt object
         Allows you to dump in a PDF file or save as an image 
     '''
     num_subfigs = len(AF.samples)
     fig = plt.figure(figsize=(24, 12))
-    fig.suptitle(f"Chromosome {chr}", x=0.125)
+    fig.suptitle(f"Chromosome {chr}", x=0.03, y=0.99)
+    # fig.patches.extend([mpatches.Rectangle((0.125,0.98),0.865,0.01,
+    #                               facecolor='none', edgecolor='black',
+    #                               transform=fig.transFigure, figure=fig)])
     if num_subfigs > 1:
         subfigs = fig.subfigures(num_subfigs, 1, wspace=0, hspace=-0.1)
         for outerind, subfig in enumerate(subfigs.flat):
             sample = AF.samples[outerind]
+            # check if the data is just for the one chr, or genoem data grouped by chr
+            if isinstance(sample_genome_baf[sample], tuple):
+                chr_plot_data = sample_genome_baf[sample]
+            else:
+                try:
+                    chr_plot_data = sample_genome_baf[sample].get_group(chr)
+                except KeyError:
+                    chr_plot_data = pd.DataFrame(columns=['chrom','position','allele_fraction','genome_coordinate'])
             axs = subfig.subplots(2, 1, sharex=True)
-            dosage_dict[sample].plot_chr_ideogram_ax(axs[0], dosage_dict[sample].grouped_read_depth.get_group(chr), capture)
-            try:
-                AF.plot_baf(sample_genome_baf[sample].get_group(chr), capture, sample, chr, ax=axs[1], genotype='all')
-            except AttributeError:
-                AF.plot_baf(sample_genome_baf[sample], sample, chr, capture, ax=axs[1], genotype='all')
+            dosage_dict[sample].plot_chr_ideogram_ax(axs[0], dosage_dict[sample].grouped_read_depth.get_group(chr), capture, chr, outerind)
+            AF.plot_baf(chr_plot_data, sample, chr, capture, ax=axs[1], genotype='all')
     else:
         sample = AF.samples[0]
+        if isinstance(sample_genome_baf[sample], tuple):
+            chr_plot_data = sample_genome_baf[sample]            
+        else:
+            chr_plot_data = sample_genome_baf[sample].get_group(chr)
         axs = fig.subplots(2, 1, sharex=True)
-        dosage_dict[sample].plot_chr_ideogram_ax(axs[0], dosage_dict[sample].grouped_read_depth.get_group(chr), capture)
-        try:
-            AF.plot_baf(sample_genome_baf[sample].get_group(chr), sample, chr, capture, ax=axs[1], genotype='all')
-        except AttributeError:
-            AF.plot_baf(sample_genome_baf[sample], sample, chr, capture, ax=axs[1], genotype='all')
-    plt.subplots_adjust(wspace=0, hspace=0)
+        dosage_dict[sample].plot_chr_ideogram_ax(axs[0], dosage_dict[sample].grouped_read_depth.get_group(chr), capture, chr, 0)
+        # dosage_dict[proband].cnvs_track(axs[0], chr)
+        AF.plot_baf(chr_plot_data, sample, chr, capture, ax=axs[1], genotype='all')
+
+    # plt.subplots_adjust(wspace=0, hspace=0.1, top=0.2, left=0.08, right=0.1)
+    plt.subplots_adjust(wspace=0, hspace=0, bottom=0.12, right=0.99)
     return plt
 
 def pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, proband, capture):
@@ -65,7 +77,7 @@ def pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, proband, capt
         pdf.savefig()
         plt.close()
         for c in chrs:
-            plt = make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, c, capture)
+            plt = make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, c, capture, proband)
             pdf.savefig()
             plt.close()
 
@@ -137,15 +149,21 @@ def main():
             )
 
     if args.mode == 'ideogram':
+        if args.outDir is None:
+            outDir = ''
+        else:
+            if args.outDir[-1] != '/': outDir = args.outDir + '/' 
+            os.makedirs(outDir, exist_ok=True)
+
         # Generate ideogram plots
         read_depth_files = {}
         cnvs_files = {}
         for sample in AF.samples:
             # try and find the cnv files first to avoid waiting ages to load the BAF data unecessarily
             print(f"Finding CNV files for {sample}")
-            data_pat = rf'^{re.escape(sample)}.*\.50000.data$'
+            data_pat = rf'^{re.escape(sample)}.*\.20000.data$'
             readDepthFile = find_file(data_pat)
-            cnvs_pat = rf'^cnvs_{re.escape(sample)}.*\.50000$'
+            cnvs_pat = rf'^cnvs_{re.escape(sample)}.*\.20000$'
             cnvsFile = find_file(cnvs_pat)
             read_depth_files[sample] = readDepthFile
             cnvs_files[sample] = cnvsFile
@@ -171,7 +189,6 @@ def main():
                 family=args.family,
                 noiseCutoff=0.3
                 )
-
             dosage_dict[sample] = Dosage
             sample_genome_baf[sample] = baf
 
@@ -181,12 +198,12 @@ def main():
         if args.location == 'all':
             print("Generating whole genome ideogram PDF report")
             chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
-            pdf_name = f"{args.family}_genome_ideogram_{date}.pdf"
+            pdf_name = f"{outDir}{args.family}_genome_ideogram_{date}.pdf"
             pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, args.proband_id, capture)
         else:
             print(f"Generating ideogram for Chromosome {args.location}")
-            make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, args.location, capture)
-            outname = f"{args.family}_chr{args.location}_ideogram_{date}.png"
+            make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, args.location, capture, args.proband_id)
+            outname = f"{outDir}{args.family}_chr{args.location}_ideogram_{date}.png"
             plt.savefig(outname)
             plt.close('all')
 
