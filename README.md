@@ -22,6 +22,7 @@ There are 3 modes for generating plots:
 - VCF file (bgzipped) and associated TBI index
 - SavvyCNV CNV calls for each individual. File must be named in the format `cnvs_<sampleID>.50000`
 - SavvyCNV data files containing per-bin metrics. File must be named in the format `<sampleID>.coverageBinner.50000.data`
+- ISCA regions
 
 The software looks for these files in a sub-directory named `test_files/`
 
@@ -47,11 +48,11 @@ The software looks for these files in a sub-directory named `test_files/`
 1. Generate PDF report containing whole genome ideogram for proband, plus per-chromosome ideograms for all family members, using default parameters
 `python generate_plots.py -l all -fam F09999 -p WGS_EX4440000 -m ideogram`
 2. Same as 1., but with changes to the SNP filtering
-`python generate_plots.py -l all -fam F09999 -vq 60 -gq 20 --mq 60 --dp 10 -qd 10 -p WGS_EX4440000 -m ideogram`
+`python generate_plots.py -l all -fam F09999 -vq 60 -gq 20 -mq 60 -dp 10 -qd 10 -p WGS_EX4440000 -m ideogram`
 3. Generate PNG ideogram for chromosome 16 only
-`python generate_plots.py -l 16 -fam F09999 -vq 60 -gq 20 --mq 60 --dp 10 -qd 10 -p WGS_EX4440000 -m ideogram`
+`python generate_plots.py -l 16 -fam F09999 -vq 60 -gq 20 -mq 60 -dp 10 -qd 10 -p WGS_EX4440000 -m ideogram`
 4. Generate PDF report for a single sample from a joint-called family
-`python generate_plots.py -l 16 -s WGS_EX4440000 -fam F09999 -vq 60 -gq 20 --mq 60 --dp 10 -qd 10 -p WGS_EX4440000 -m ideogram`
+`python generate_plots.py -l 16 -s WGS_EX4440000 -fam F09999 -vq 60 -gq 20 -mq 60 -dp 10 -qd 10 -p WGS_EX4440000 -m ideogram`
 
 #### baf mode
 1. Generate BAF plots for a single sample for a specific genomic region

@@ -215,7 +215,7 @@ class Allele_Fraction():
             location = f"chr{chrom}.{start}-{end}"
 
         # dot size
-        dot_size = 5 if capture == 'genome' else 10
+        dot_size = 0.9 if capture == 'genome' else 10
         # Plotting the Allele Fraction Scatter Plot
         # Set custom Y-axis ticks
         custom_ticks = [0, 0.25, 0.337, 0.5, 0.667, 0.75, 1]
@@ -233,7 +233,7 @@ class Allele_Fraction():
             pltAx.set_ylabel("Allele Fraction")
             pltAx.set_ylim(-0.1, 1.1)  # AF values range between 0 and 1
             pltAx.set_xlim(left=0)
-        pltAx.scatter(variant_positions, allele_fractions, s=dot_size, alpha=0.3, color='purple', edgecolors='purple', rasterized=True)
+        pltAx.scatter(variant_positions, allele_fractions, s=dot_size, color='purple', edgecolors='purple', rasterized=True)
         pltAx.axhline(0.667, color='black', linestyle='dashed', linewidth=1)
         pltAx.axhline(0.5, color='black', linestyle='dashed', linewidth=1)
         pltAx.axhline(0.337, color='black', linestyle='dashed', linewidth=1)
