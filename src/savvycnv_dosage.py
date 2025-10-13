@@ -12,10 +12,11 @@ pd.options.mode.chained_assignment = None  # default='warn'
 class Sample_Dosage():
     ''' Create dataframes and plot axes for dosage on a per sample level across the whole genome '''
 
-    def __init__(self, readDepthFile, cnvsFile, cytobandsFile, sample, family, noiseCutoff):
+    def __init__(self, readDepthFile, cnvsFile, cytobandsFile, iscaFile, sample, family, noiseCutoff):
         self.readDepthFile = readDepthFile
         self.cnvsFile = cnvsFile
         self.cytobandsFile = cytobandsFile
+        self.iscaFile = iscaFile
         self.sample = sample
         self.family = family
         self.noiseCutoff = noiseCutoff
@@ -49,8 +50,7 @@ class Sample_Dosage():
         return cnvs_df
     
     def load_regions(self):
-        regions_file = 'web_ClinGen_region_curation_list_GRCh38_20250425.tsv'
-        regions_df = pd.read_csv(regions_file, sep="\t", index_col=False)
+        regions_df = pd.read_csv(self.iscaFile, sep="\t", index_col=False)
         return regions_df
 
     def format_cytobands(self):

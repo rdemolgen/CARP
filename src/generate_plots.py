@@ -185,6 +185,7 @@ def main():
                 readDepthFile=read_depth_files[sample],
                 cnvsFile=cnvs_files[sample],
                 cytobandsFile='../hg38_cytoBand.txt',
+                iscaFile='web_ClinGen_region_curation_list_GRCh38_20250425.tsv',
                 sample=sample,
                 family=args.family,
                 noiseCutoff=0.3
