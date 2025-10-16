@@ -9,6 +9,14 @@ from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
 import math, argparse, re, os, sys
 
+def verify_dir(dirStr):
+    if dirStr is None:
+        dir = os.getcwd()
+    else:
+        dir = os.path.abspath(os.path.normpath(dirStr))
+        os.makedirs(dir, exist_ok=True)
+    return dir
+
 def make_genome_ideogram(AF, genome_baf, Dosage, capture):
     '''  
         Plot dosage,baf ideograms for the whole genome and return the plt object
@@ -83,19 +91,19 @@ def pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, proband, capt
 
 # move the cytobands stuff to it's own section to avoid repeating with every Class object
 
-def find_file(regex_pattern):
+def find_file(in_dir, regex_pattern):
     '''  
         Find a file based on the provied glob_string, e.g. 'WGS_EX1234567*data'
         Error if the file can't be found or if there are duplicates of the file
     '''
-    reg_files = [f for f in os.listdir('../test_files/') if re.match(regex_pattern, f)]
+    reg_files = [f for f in os.listdir(in_dir) if re.match(regex_pattern, f)]
 
     if len(reg_files) > 1:
         sys.exit("Error: More than one file found matching the regex pattern " + regex_pattern)
     elif len(reg_files) == 0:
         sys.exit("Error: No file found matching the regex pattern" + regex_pattern)
     else:
-        file_path = os.path.join('../test_files/', reg_files[0])
+        file_path = os.path.join(in_dir, reg_files[0])
         return file_path
 
 def main():
@@ -105,6 +113,7 @@ def main():
     parser.add_argument('-l', '--location', type=str, required=True, help="Genomic location either chr or chr:start-end")
     parser.add_argument('-s', '--samples', type=str, required=False, help="List of sample ids, starting with proband separated by spaces")
     parser.add_argument('-g', '--genotypes', type=str, required=False, help="List of genotypes matching the order of sample ids")
+    parser.add_argument('-i', '--inDir', type=str, required=False, help="Input file location.")
     parser.add_argument('-o', '--outDir', type=str, required=False, help="Output directory for plots.")
     parser.add_argument('-f', '--no_filtering', action='store_true', required=False, help="Accept varaints with other non-PASS filters (QD>2,MQ>40), default=False")
     parser.add_argument('-vq', '--min_qual', type=int, required=False, default=30, help="Min variant quality score, default=30")
@@ -121,12 +130,15 @@ def main():
 
     capture = 'exome' if args.proband_id.startswith('TwEx') else 'genome'
 
+    in_dir = verify_dir(args.inDir)
+    out_dir = verify_dir(args.outDir)
+
     if args.mode != 'dosage':
         print(f'Running in {args.mode} mode')
 
         print(f"Finding family VCF files for {args.proband_id}")
         vcf_pat = rf'^(?!.*gnomad_filtered).*{re.escape(args.proband_id)}.*\.vcf\.gz$'
-        vcfFile = find_file(vcf_pat)
+        vcfFile = find_file(in_dir, vcf_pat)
         print(f"Loaded {vcfFile}")
 
         if args.mode == 'baf' and str(args.location) == 'all':
@@ -149,12 +161,6 @@ def main():
             )
 
     if args.mode == 'ideogram':
-        if args.outDir is None:
-            outDir = ''
-        else:
-            if args.outDir[-1] != '/': outDir = args.outDir + '/' 
-            os.makedirs(outDir, exist_ok=True)
-
         # Generate ideogram plots
         read_depth_files = {}
         cnvs_files = {}
@@ -162,9 +168,9 @@ def main():
             # try and find the cnv files first to avoid waiting ages to load the BAF data unecessarily
             print(f"Finding CNV files for {sample}")
             data_pat = rf'^{re.escape(sample)}.*\.20000.data$'
-            readDepthFile = find_file(data_pat)
+            readDepthFile = find_file(in_dir, data_pat)
             cnvs_pat = rf'^cnvs_{re.escape(sample)}.*\.20000$'
-            cnvsFile = find_file(cnvs_pat)
+            cnvsFile = find_file(in_dir, cnvs_pat)
             read_depth_files[sample] = readDepthFile
             cnvs_files[sample] = cnvsFile
             print(f"Loaded {cnvsFile} and {readDepthFile}")
@@ -199,12 +205,12 @@ def main():
         if args.location == 'all':
             print("Generating whole genome ideogram PDF report")
             chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
-            pdf_name = f"{outDir}{args.family}_genome_ideogram_{date}.pdf"
+            pdf_name = f"{out_dir}/{args.family}_genome_ideogram_{date}.pdf"
             pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, args.proband_id, capture)
         else:
             print(f"Generating ideogram for Chromosome {args.location}")
             make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, args.location, capture, args.proband_id)
-            outname = f"{outDir}{args.family}_chr{args.location}_ideogram_{date}.png"
+            outname = f"{out_dir}/{args.family}_chr{args.location}_ideogram_{date}.png"
             plt.savefig(outname)
             plt.close('all')
 
