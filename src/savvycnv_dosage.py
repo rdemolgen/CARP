@@ -23,7 +23,7 @@ class Sample_Dosage():
         self.chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
 
         # load data
-        self.read_depth = self.load_read_depth()
+        self.readDepth = self.load_read_depth()
         self.cytobands, self.acens = self.format_cytobands()
         self.cnvs = self.load_cnvs()
         self.regions = self.load_regions()
@@ -125,9 +125,9 @@ class Sample_Dosage():
 
     def process_read_depth(self):
         # get the cumulative position across the genome. for compatibility with BAF coordinates
-        cumulative_genome_position = self.get_genome_coordinates(self.read_depth, 'bin_end')
+        cumulative_genome_position = self.get_genome_coordinates(self.readDepth, 'bin_end')
         # remove centromeres
-        depth_sans_acens = self.remove_centromeres(self.read_depth, self.acens, self.chrs)
+        depth_sans_acens = self.remove_centromeres(self.readDepth, self.acens, self.chrs)
         # remove bins that have noise above our cut-off for CNV calling
         high_noise, low_noise = self.limit_noise(depth_sans_acens, self.noiseCutoff)
         # sort and group
