@@ -20,8 +20,8 @@ There are 3 modes for generating plots:
 
 **Required files**
 - VCF file (bgzipped) and associated TBI index
-- SavvyCNV CNV calls for each individual. File must be named in the format `cnvs_<sampleID>.50000`
-- SavvyCNV data files containing per-bin metrics. File must be named in the format `<sampleID>.coverageBinner.50000.data`
+- SavvyCNV CNV calls for each individual. File must be named in the format `cnvs_<sampleID>.20000`
+- SavvyCNV data files containing per-bin metrics. File must be named in the format `<sampleID>.coverageBinner.20000.data`
 - ISCA regions
 
 The software looks for these files in a sub-directory named `test_files/`
