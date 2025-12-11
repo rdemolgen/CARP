@@ -12,13 +12,13 @@ pd.options.mode.chained_assignment = None  # default='warn'
 class Sample_Dosage():
     ''' Create dataframes and plot axes for dosage on a per sample level across the whole genome '''
 
-    def __init__(self, readDepthFile, cnvsFile, cytobandsFile, iscaFile, sample, family, noiseCutoff):
+    def __init__(self, readDepthFile, cnvsFile, cytobandsFile, iscaFile, sample, prefix, noiseCutoff):
         self.readDepthFile = readDepthFile
         self.cnvsFile = cnvsFile
         self.cytobandsFile = cytobandsFile
         self.iscaFile = iscaFile
         self.sample = sample
-        self.family = family
+        self.prefix = prefix
         self.noiseCutoff = noiseCutoff
         self.chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
 
@@ -153,7 +153,7 @@ class Sample_Dosage():
         ax.set_xlim([0, len(self.grouped_read_depth)])
         ax.set_xticks(x_labels_pos)
         ax.set_xticklabels(x_labels)
-        ax.set_title(self.family + ', noise cut-off = ' + str(self.noiseCutoff))
+        ax.set_title(self.prefix + ', noise cut-off = ' + str(self.noiseCutoff))
         return ax
 
     def plot_chr_ideogram_ax(self, ax, dosage_data, capture, chr, outerind):

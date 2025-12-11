@@ -121,9 +121,11 @@ def main():
     parser.add_argument('-gq', '--min_gq', type=int, required=False, default=20, help="Min genotype quality score, default=20")
     parser.add_argument('-mq', '--min_mq', type=int, required=False, default=40, help="Min mapping quality score, default=40")
     parser.add_argument('-qd', '--min_qd', type=int, required=False, default=2, help="Min qual-by-depth score, default=2")
-    parser.add_argument('-fam', '--family', type=str, required=True, help="family")
+    parser.add_argument('--prefix', type=str, required=True, help="Prefix for output file names")
     parser.add_argument('-p', '--proband_id', type=str, required=True, help="proband ID")
     parser.add_argument('-m', '--mode', type=str, required=True, help="Valid values: baf, ideogram, dosage")
+    parser.add_argument('--cyto', type=str, required=True, help="Path to cytobands file")
+    parser.add_argument('--isca', type=str, required=True, help="Path to ISCA regions file")
 
     # Parse args
     args = parser.parse_args()
@@ -190,10 +192,10 @@ def main():
             Dosage = Sample_Dosage(
                 readDepthFile=read_depth_files[sample],
                 cnvsFile=cnvs_files[sample],
-                cytobandsFile='../hg38_cytoBand.txt',
-                iscaFile='web_ClinGen_region_curation_list_GRCh38_20250425.tsv',
+                cytobandsFile=args.cyto, #'../hg38_cytoBand.txt'
+                iscaFile=args.isca, #'web_ClinGen_region_curation_list_GRCh38_20250425.tsv'
                 sample=sample,
-                family=args.family,
+                prefix=args.prefix,
                 noiseCutoff=0.3
                 )
             dosage_dict[sample] = Dosage
@@ -205,12 +207,12 @@ def main():
         if args.location == 'all':
             print("Generating whole genome ideogram PDF report")
             chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
-            pdf_name = f"{out_dir}/{args.family}_genome_ideogram_{date}.pdf"
+            pdf_name = f"{out_dir}/{args.prefix}_genome_ideogram_{date}.pdf"
             pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, args.proband_id, capture)
         else:
             print(f"Generating ideogram for Chromosome {args.location}")
             make_chromosome_ideograms(AF, sample_genome_baf, dosage_dict, args.location, capture, args.proband_id)
-            outname = f"{out_dir}/{args.family}_chr{args.location}_ideogram_{date}.png"
+            outname = f"{out_dir}/{args.prefix}_chr{args.location}_ideogram_{date}.png"
             plt.savefig(outname)
             plt.close('all')
 
