@@ -160,7 +160,6 @@ class Allele_Fraction():
                 continue
 
             positions.append(rec.pos)
-
         return {'id': sample, 'positions': positions, 'genotype': genotype}
 
     def intersect_sample_variants(self, sample_pos):

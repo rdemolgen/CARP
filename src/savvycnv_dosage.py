@@ -12,17 +12,18 @@ pd.options.mode.chained_assignment = None  # default='warn'
 class Sample_Dosage():
     ''' Create dataframes and plot axes for dosage on a per sample level across the whole genome '''
 
-    def __init__(self, readDepthFile, cnvsFile, cytobandsFile, sample, family, noiseCutoff):
+    def __init__(self, readDepthFile, cnvsFile, cytobandsFile, iscaFile, sample, prefix, noiseCutoff):
         self.readDepthFile = readDepthFile
         self.cnvsFile = cnvsFile
         self.cytobandsFile = cytobandsFile
+        self.iscaFile = iscaFile
         self.sample = sample
-        self.family = family
+        self.prefix = prefix
         self.noiseCutoff = noiseCutoff
         self.chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
 
         # load data
-        self.read_depth = self.load_read_depth()
+        self.readDepth = self.load_read_depth()
         self.cytobands, self.acens = self.format_cytobands()
         self.cnvs = self.load_cnvs()
         self.regions = self.load_regions()
@@ -49,8 +50,7 @@ class Sample_Dosage():
         return cnvs_df
     
     def load_regions(self):
-        regions_file = 'web_ClinGen_region_curation_list_GRCh38_20250425.tsv'
-        regions_df = pd.read_csv(regions_file, sep="\t", index_col=False)
+        regions_df = pd.read_csv(self.iscaFile, sep="\t", index_col=False)
         return regions_df
 
     def format_cytobands(self):
@@ -125,9 +125,9 @@ class Sample_Dosage():
 
     def process_read_depth(self):
         # get the cumulative position across the genome. for compatibility with BAF coordinates
-        cumulative_genome_position = self.get_genome_coordinates(self.read_depth, 'bin_end')
+        cumulative_genome_position = self.get_genome_coordinates(self.readDepth, 'bin_end')
         # remove centromeres
-        depth_sans_acens = self.remove_centromeres(self.read_depth, self.acens, self.chrs)
+        depth_sans_acens = self.remove_centromeres(self.readDepth, self.acens, self.chrs)
         # remove bins that have noise above our cut-off for CNV calling
         high_noise, low_noise = self.limit_noise(depth_sans_acens, self.noiseCutoff)
         # sort and group
@@ -153,7 +153,7 @@ class Sample_Dosage():
         ax.set_xlim([0, len(self.grouped_read_depth)])
         ax.set_xticks(x_labels_pos)
         ax.set_xticklabels(x_labels)
-        ax.set_title(self.family + ', noise cut-off = ' + str(self.noiseCutoff))
+        ax.set_title(self.prefix + ', noise cut-off = ' + str(self.noiseCutoff))
         return ax
 
     def plot_chr_ideogram_ax(self, ax, dosage_data, capture, chr, outerind):
