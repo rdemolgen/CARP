@@ -92,7 +92,7 @@ def pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, proband, capt
 # move the cytobands stuff to it's own section to avoid repeating with every Class object
 
 def find_file(in_dir, regex_pattern):
-    '''  
+    '''
         Find a file based on the provied glob_string, e.g. 'WGS_EX1234567*data'
         Error if the file can't be found or if there are duplicates of the file
     '''
