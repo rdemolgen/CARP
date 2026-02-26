@@ -18,9 +18,9 @@ class Baf:
         """
         if samples == None:
             self.logger.info(list(self.vcfFile.header.samples))
-            return list("Samples from VCF file:", self.vcfFile.header.samples)
+            return list(f"Samples from VCF file: {self.vcfFile.header.samples}")
         else:
-            self.logger.info("Samples from user input:", samples.split(' '))
+            self.logger.info(f"Samples from user input: {samples.split(' ')}")
             return samples.split(' ')
 
     def load_vcf(self, vcfPath: Path) -> pysam.VariantFile:
@@ -79,7 +79,7 @@ class Baf:
             if sample_data["GT"] != gt and gt != None:
                 continue
             # Accept only "PASS" or "." variants
-            if not self.filters["no_filter"]:
+            if not self.filters["no_filtering"]:
                 if "PASS" not in rec.filter.keys() and "." not in rec.filter.keys():
                     continue
             try:
@@ -179,3 +179,34 @@ class Baf:
             msg = f"Unexpected number of samples: {str(no_samples)}"
             self.logger.error(msg)
             raise ValueError(msg)
+
+    def intersect_sample_variants(self, sample_pos: list) -> list:
+        """
+            Find matching variant positions between samples
+        """
+        intersect_pos = set(sample_pos[0]['positions'])
+
+        for sample in sample_pos[1:]:
+            intersect_pos &= set(sample['positions'])
+        
+        intersect_pos = list(intersect_pos)
+        intersect_pos.sort()
+
+        return intersect_pos
+
+    def calc_baf(self, sample: str, chrom: str, positions: list) -> tuple:
+        """
+            Returns baf and variant position
+        """
+        allele_fractions = [] # Y axis
+        variant_positions = [] # X axis
+
+        for pos in positions:
+            for rec in self.vcfFile.fetch(str(chrom), pos -1, pos):
+                ad = rec.samples[sample]['AD']
+                if ad and sum(ad) > 0:  # Avoid division by zero
+                    baf = ad[1] / sum(ad)  # Alt / (Ref + Alt) 
+                    allele_fractions.append(baf)
+                    variant_positions.append(pos)
+
+        return (allele_fractions, variant_positions)

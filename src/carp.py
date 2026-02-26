@@ -14,16 +14,16 @@ class Carp:
         self.location = None
         self.proband_id = args.proband_id
         self.prefix = args.prefix
+        self.utility = Utility(self.prefix, self.proband_id, self.now)
         
         self.inDir = self.utility.verify_dir(args.inDir)
         self.outDir = self.utility.verify_dir(args.outDir)
 
-        self.utility = Utility(self.outDir, self.prefix, self.proband_id, self.now)
         self.logger = self.utility.logger
         
         # do we want to have different min defaults for WES and WGS data
         self.filters = {
-            "no_filter": args.no_filter,
+            "no_filter": args.no_filtering,
             "min_qual": args.min_qual,
             "min_dp": args.min_dp,
             "min_gq": args.min_gq,

@@ -1,4 +1,4 @@
-import unittest
+import datetime, os, unittest
 
 from pathlib import Path
 
@@ -9,8 +9,6 @@ class Test(unittest.TestCase):
         self.now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         self.testDir = Path(f"{os.getcwd()}/tests")
         self.cwd = Path(os.getcwd())
-
-        self.baf = Baf()
     
     def cleanUp(self, in_dir: Path):
         """

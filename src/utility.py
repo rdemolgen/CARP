@@ -1,11 +1,12 @@
 import logging, os, re, time
 from pathlib import Path
+from typing import Optional
 
 class Utility:
 
-    def __init__(self, logPath, prefix, proband_id, now):
+    def __init__(self, prefix, proband_id, now, logPath=None):
         # self.catch_the_carp(Path("resources") / "carp")
-        self.logger = self.setup_logging(logPath, prefix, proband_id, now)
+        self.logger = self.setup_logging(prefix, proband_id, now, logPath)
 
     def catch_the_carp(self, file_path: Path, delay: float = 0.001):
         """
@@ -19,8 +20,10 @@ class Utility:
                 print(char, end="", flush=True)
                 time.sleep(delay)
 
-    def setup_logging(self, logPath: Path, prefix: str, proband_id: str, now: str) -> logging.Logger:
+    def setup_logging(self, prefix: str, proband_id: str, now: str, logPath: Optional[Path]=None) -> logging.Logger:
         """Create log file in specificied folder"""
+        if logPath == None:
+            logPath = Path("logs")
         if not logPath.is_dir():
             logPath.mkdir(parents=True, exist_ok=True)
             logPath.chmod(0o775) 

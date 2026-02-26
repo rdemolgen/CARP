@@ -9,13 +9,13 @@ from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
 import math, argparse, re, os, sys
 
-def verify_dir(dirStr):
-    if dirStr is None:
-        dir = os.getcwd()
-    else:
-        dir = os.path.abspath(os.path.normpath(dirStr))
-        os.makedirs(dir, exist_ok=True)
-    return dir
+# def verify_dir(dirStr):
+#     if dirStr is None:
+#         dir = os.getcwd()
+#     else:
+#         dir = os.path.abspath(os.path.normpath(dirStr))
+#         os.makedirs(dir, exist_ok=True)
+#     return dir
 
 def make_genome_ideogram(AF, genome_baf, Dosage, capture):
     '''  
@@ -91,49 +91,49 @@ def pdf_report(pdf_name, AF, sample_genome_baf, dosage_dict, chrs, proband, capt
 
 # move the cytobands stuff to it's own section to avoid repeating with every Class object
 
-def find_file(in_dir, regex_pattern):
-    '''
-        Find a file based on the provied glob_string, e.g. 'WGS_EX1234567*data'
-        Error if the file can't be found or if there are duplicates of the file
-    '''
-    reg_files = [f for f in os.listdir(in_dir) if re.match(regex_pattern, f)]
+# def find_file(in_dir, regex_pattern):
+#     '''
+#         Find a file based on the provied glob_string, e.g. 'WGS_EX1234567*data'
+#         Error if the file can't be found or if there are duplicates of the file
+#     '''
+#     reg_files = [f for f in os.listdir(in_dir) if re.match(regex_pattern, f)]
 
-    if len(reg_files) > 1:
-        sys.exit("Error: More than one file found matching the regex pattern " + regex_pattern)
-    elif len(reg_files) == 0:
-        sys.exit("Error: No file found matching the regex pattern" + regex_pattern)
-    else:
-        file_path = os.path.join(in_dir, reg_files[0])
-        return file_path
+#     if len(reg_files) > 1:
+#         sys.exit("Error: More than one file found matching the regex pattern " + regex_pattern)
+#     elif len(reg_files) == 0:
+#         sys.exit("Error: No file found matching the regex pattern" + regex_pattern)
+#     else:
+#         file_path = os.path.join(in_dir, reg_files[0])
+#         return file_path
 
 def main():
-    parser = argparse.ArgumentParser(description="")
-    # Arguments
-    parser.add_argument('-v', '--vcfFile', type=str, required=False, help="VCF file")
-    parser.add_argument('-l', '--location', type=str, required=True, help="Genomic location either chr or chr:start-end")
-    parser.add_argument('-s', '--samples', type=str, required=False, help="List of sample ids, starting with proband separated by spaces")
-    parser.add_argument('-g', '--genotypes', type=str, required=False, help="List of genotypes matching the order of sample ids")
-    parser.add_argument('-i', '--inDir', type=str, required=False, help="Input file location.")
-    parser.add_argument('-o', '--outDir', type=str, required=False, help="Output directory for plots.")
-    parser.add_argument('-f', '--no_filtering', action='store_true', required=False, help="Accept varaints with other non-PASS filters (QD>2,MQ>40), default=False")
-    parser.add_argument('-vq', '--min_qual', type=int, required=False, default=30, help="Min variant quality score, default=30")
-    parser.add_argument('-dp', '--min_dp', type=int, required=False, default=10, help="Min variant read depth, default=10")
-    parser.add_argument('-gq', '--min_gq', type=int, required=False, default=20, help="Min genotype quality score, default=20")
-    parser.add_argument('-mq', '--min_mq', type=int, required=False, default=40, help="Min mapping quality score, default=40")
-    parser.add_argument('-qd', '--min_qd', type=int, required=False, default=2, help="Min qual-by-depth score, default=2")
-    parser.add_argument('--prefix', type=str, required=True, help="Prefix for output file names")
-    parser.add_argument('-p', '--proband_id', type=str, required=True, help="proband ID")
-    parser.add_argument('-m', '--mode', type=str, required=True, help="Valid values: baf, ideogram, dosage")
-    parser.add_argument('--cyto', type=str, required=True, help="Path to cytobands file")
-    parser.add_argument('--isca', type=str, required=True, help="Path to ISCA regions file")
+    # parser = argparse.ArgumentParser(description="")
+    # # Arguments
+    # parser.add_argument('-v', '--vcfFile', type=str, required=False, help="VCF file")
+    # parser.add_argument('-l', '--location', type=str, required=True, help="Genomic location either chr or chr:start-end")
+    # parser.add_argument('-s', '--samples', type=str, required=False, help="List of sample ids, starting with proband separated by spaces")
+    # parser.add_argument('-g', '--genotypes', type=str, required=False, help="List of genotypes matching the order of sample ids")
+    # parser.add_argument('-i', '--inDir', type=str, required=False, help="Input file location.")
+    # parser.add_argument('-o', '--outDir', type=str, required=False, help="Output directory for plots.")
+    # parser.add_argument('-f', '--no_filtering', action='store_true', required=False, help="Accept varaints with other non-PASS filters (QD>2,MQ>40), default=False")
+    # parser.add_argument('-vq', '--min_qual', type=int, required=False, default=30, help="Min variant quality score, default=30")
+    # parser.add_argument('-dp', '--min_dp', type=int, required=False, default=10, help="Min variant read depth, default=10")
+    # parser.add_argument('-gq', '--min_gq', type=int, required=False, default=20, help="Min genotype quality score, default=20")
+    # parser.add_argument('-mq', '--min_mq', type=int, required=False, default=40, help="Min mapping quality score, default=40")
+    # parser.add_argument('-qd', '--min_qd', type=int, required=False, default=2, help="Min qual-by-depth score, default=2")
+    # parser.add_argument('--prefix', type=str, required=True, help="Prefix for output file names")
+    # parser.add_argument('-p', '--proband_id', type=str, required=True, help="proband ID")
+    # parser.add_argument('-m', '--mode', type=str, required=True, help="Valid values: baf, ideogram, dosage")
+    # parser.add_argument('--cyto', type=str, required=True, help="Path to cytobands file")
+    # parser.add_argument('--isca', type=str, required=True, help="Path to ISCA regions file")
 
-    # Parse args
-    args = parser.parse_args()
+    # # Parse args
+    # args = parser.parse_args()
 
-    capture = 'exome' if args.proband_id.startswith('TwEx') else 'genome'
+    # capture = 'exome' if args.proband_id.startswith('TwEx') else 'genome'
 
-    in_dir = verify_dir(args.inDir)
-    out_dir = verify_dir(args.outDir)
+    # in_dir = verify_dir(args.inDir)
+    # out_dir = verify_dir(args.outDir)
 
     if args.mode != 'dosage':
         print(f'Running in {args.mode} mode')

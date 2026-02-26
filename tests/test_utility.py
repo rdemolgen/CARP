@@ -10,7 +10,7 @@ class Test(unittest.TestCase):
         self.testDir = Path(f"{os.getcwd()}/tests")
         self.cwd = Path(os.getcwd())
 
-        self.utility = Utility(self.testDir / "output", "test_", "TwEx_EX2601234", self.now)
+        self.utility = Utility("test_utility_", "TwEx_EX2601234", self.now, self.testDir / "output")
     
     def tearDown(self):
         # Reconstruct the log name used in setup_logging
@@ -94,10 +94,10 @@ class Test(unittest.TestCase):
         logDir = self.testDir / "logging"
         try:
             logger = self.utility.setup_logging(
-                logDir,
                 "test_",
                 "TwEx_EX2601234",
-                self.now
+                self.now,
+                logDir
             )
             self.assertEqual(type(logger), logging.Logger)
             logger.info("Add something to log file")
