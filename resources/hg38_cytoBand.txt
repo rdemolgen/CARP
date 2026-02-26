@@ -1,0 +1,1 @@
+/mnt/data1/working_directory/suzy/R14_array_validation/CARP/hg38_cytoBand.txt
