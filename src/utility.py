@@ -64,16 +64,17 @@ class Utility:
         self.logger.error(msg)
         raise ValueError(msg)
     
-    def verify_dir(self, dirStr: str) -> Path:
+    @staticmethod
+    def verify_dir(dirStr: str) -> Path:
         """Set input/output direct"""
         try:
             dir = Path(dirStr)
         except TypeError:
-            self.logger.error(f"Directory: '{dirStr}' not provided or invalid")
+            print(f"Directory: '{dirStr}' not provided or invalid")
             dir = Path(os.getcwd())
 
         if not dir.is_dir():
-            self.logger.info(f"{str(dir)} folder created")
+            print(f"{str(dir)} folder created")
             dir.mkdir(mode=0o777, parents=True, exist_ok=False)
 
         return dir
@@ -100,3 +101,27 @@ class Utility:
 
         self.logger.info(f"File found:  '{reg_files[0]}'")
         return reg_files[0]
+
+    @staticmethod
+    def get_genotype(gt: str, label: bool) -> str:
+        """
+            Returns genotype from string as either tuple or verbose string
+        """
+        if not label:
+            if gt == '0/0':
+                return (0, 0)
+            elif gt == '0/1':
+                return (0, 1)
+            elif gt == '1/1':
+                return (1, 1)
+            else:
+                return None
+        else:
+            if gt == '0/0':
+                return 'reference'
+            elif gt == '0/1':
+                return 'heterozygous'
+            elif gt == '1/1':
+                return 'homozygous'
+            else:
+                return 'all'
