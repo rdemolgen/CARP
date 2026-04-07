@@ -1,12 +1,13 @@
-import os
+
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from matplotlib.axes import Axes
 from matplotlib.backends.backend_pdf import PdfPages
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 from utility import Utility
 
 class Plots:
@@ -15,9 +16,9 @@ class Plots:
         pass
 
     @staticmethod
-    def plot_baf_ideogram(ax: np.ndarray, grouped_depth: dict, capture: str):
+    def plot_baf_ideogram(ax: Axes, grouped_depth: dict, capture: str) -> Axes:
         """
-
+            Return sub plots of baf per chromosome
         """
         colours = ['#4477AA', '#EE6677']
         # dot size
@@ -30,7 +31,7 @@ class Plots:
         return ax
 
     @staticmethod
-    def make_genome_ideogram(genome_baf, Dosage, capture):
+    def make_genome_ideogram(genome_baf: dict, dosage: dict, capture: str) -> plt:
         '''  
             Plot dosage,baf ideograms for the whole genome and return the plt object
             Allows you to dump in a PDF file or save as an image 
@@ -39,7 +40,7 @@ class Plots:
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(24, 12), layout="compressed", sharex=True)
         axes[0].set_ylim([-0.1, 2.1])
         axes[0].set_yticks(np.arange(0, 2, 0.25))
-        Dosage.plot_ideogram_ax(axes[0], capture)
+        Plots.plot_ideogram_ax(axes[0], capture, dosage)
         # Set custom Y-axis ticks
         custom_ticks = [0, 0.25, 0.337, 0.5, 0.667, 0.75, 1]
         axes[1].set_yticks(custom_ticks, labels=[str(tick) for tick in custom_ticks])
@@ -49,7 +50,7 @@ class Plots:
         return plt
 
     @staticmethod
-    def make_chromosome_ideograms(samples, sample_genome_baf, dosage_dict, chr, capture, proband):
+    def make_chromosome_ideograms(samples: list, sample_genome_baf: dict, dosage_dict: dict, chr: str, capture: str) -> plt:
         '''  
             Plot dosage,baf ideograms for each chromosome and return the plt object
             Allows you to dump in a PDF file or save as an image 
@@ -90,30 +91,35 @@ class Plots:
         plt.subplots_adjust(wspace=0, hspace=0, bottom=0.12, right=0.99)
         return plt
 
-    def plot_ideogram_ax(self, ax, capture):
+    def plot_ideogram_ax(ax: Axes, capture: str, dosage: dict) -> Axes:
+        """
+            Plot all subplots
+        """
         colours = ['#4477AA', '#EE6677']
         # dot size
         dot_size = 5 if capture == 'genome' else 7
         # lables for chromosomes
         x_labels = []
         x_labels_pos = []
-        ymax = self.grouped_read_depth.max()
-        print(ymax)
-        for num, (name, group) in enumerate(self.grouped_read_depth):
+        ymax = dosage.grouped_read_depth.max()
+        for num, (name, group) in enumerate(dosage.grouped_read_depth):
             # plot noise first
             ax.fill_between(group['genome_coordinate'], group['stdev_neg'],group['stdev_pos'], color='#CCBB44')
             # plot each group (chromosome) and colour using the color pallete
             group.plot(kind='scatter', x='genome_coordinate', y='dosage',color=colours[num % len(colours)], ax=ax, legend=None, s=dot_size, rasterized=True)
             x_labels.append(name)
             x_labels_pos.append((group['genome_coordinate'].iloc[-1] - (group['genome_coordinate'].iloc[-1] - group['genome_coordinate'].iloc[0])/2))
-        ax.set_xlim([0, len(self.grouped_read_depth)])
+        ax.set_xlim([0, len(dosage.grouped_read_depth)])
         ax.set_xticks(x_labels_pos)
         ax.set_xticklabels(x_labels)
-        ax.set_title(self.prefix + ', noise cut-off = ' + str(self.noiseCutoff))
+        ax.set_title(dosage.prefix + ', noise cut-off = ' + str(dosage.noiseCutoff))
         return ax
 
     @staticmethod
-    def plot_chr_ideogram_ax(sample, ax, dosage_data, capture, chr, outerind, cnvs, regions):
+    def plot_chr_ideogram_ax(sample: str, ax: Axes, dosage_data: dict, capture: str, chr: str, outerind: int, cnvs: pd.DataFrame, regions: pd.DataFrame) -> Axes:
+        """
+            Plot chromosome ideogram subplots
+        """
         # dot size
         dot_size = 5 if capture == 'genome' else 8
         ax.fill_between(dosage_data['bin_end'], dosage_data['stdev_neg'],dosage_data['stdev_pos'], color='#CCBB44')
@@ -133,17 +139,17 @@ class Plots:
         return ax
 
     @staticmethod
-    def pdf_report(pdf_name, samples, sample_genome_baf, dosage_dict, chrs, proband, capture):
+    def pdf_report(pdf_name: str, samples: list, sample_genome_baf: dict, dosage_dict: dict, chrs: list, proband: str, capture: str):
         '''  
             Generate a PDF report containing dosage,baf ideograms for the whole genome (proband)
             and for each chromosome (all family members)
         '''
         with PdfPages(pdf_name) as pdf:
-            plt = Plots.make_genome_ideogram(samples, sample_genome_baf[proband], dosage_dict[proband], capture)
+            plt = Plots.make_genome_ideogram(sample_genome_baf[proband], dosage_dict[proband], capture)
             pdf.savefig()
             plt.close()
             for c in chrs:
-                plt = Plots.make_chromosome_ideograms(samples, sample_genome_baf, dosage_dict, c, capture, proband)
+                plt = Plots.make_chromosome_ideograms(samples, sample_genome_baf, dosage_dict, c, capture)
                 pdf.savefig()
                 plt.close()
 
@@ -167,7 +173,6 @@ class Plots:
         else:
             samp_geno_label.append(sample)
             samp_geno_label.append(Utility.get_genotype(genotype, True)[:3])
-        print("GENO", genotype)
         samp_geno_label = '_'.join(samp_geno_label)
 
         if (start == 1 or start is None) and end is None:
@@ -210,7 +215,7 @@ class Plots:
             return pltAx
 
     @staticmethod
-    def get_ylims(dosage):
+    def get_ylims(dosage: float) -> Tuple[float, float]:
         ''' Fix y-axis limits from 0-2 unless there is a dosage >2.2,
         then fix between the 0 and the max dosage '''
         ymin = -0.1
@@ -221,7 +226,10 @@ class Plots:
         return ymin, ymax
 
     @staticmethod
-    def cnvs_track(ax, chr, cnvs):
+    def cnvs_track(ax: Axes, chr: str, cnvs: pd.DataFrame) -> Axes:
+        """
+            Annotate plots with cnv track
+        """
         track_y0 = 1.025
         track_h = 0.1
         track_box = mpatches.Rectangle((0, 1), width=1, height=0.1, facecolor='none', edgecolor='none', transform=ax.transAxes, clip_on=False)
@@ -241,7 +249,10 @@ class Plots:
         return ax
 
     @staticmethod
-    def isca_track(ax, chr, regions):
+    def isca_track(ax: Axes, chr: str, regions: pd.DataFrame) -> Axes:
+        """
+            Annotate plots with cnv track
+        """
         track_y0 = 1.15
         track_h = 0.05
         track_box = mpatches.Rectangle((0, track_y0), width=1, height=track_h, facecolor='none', edgecolor='none', transform=ax.transAxes, clip_on=False)
@@ -260,8 +271,10 @@ class Plots:
         return ax
 
     @staticmethod
-    def transform_y_point(ax, relative_y0, relative_height):
-        ''' For adding tracks to figures. Given a relative y-axis (y0) coordinate, and a relative height convert to data coordinates '''
+    def transform_y_point(ax: Axes, relative_y0: float, relative_height: float) -> tuple[float, float]:
+        """
+            For adding tracks to figures. Given a relative y-axis (y0) coordinate, and a relative height convert to data coordinates
+        """
         # get the display coordinate for the axes-relative y position, then use invert to get the data coordinate
         disp_y0 = ax.transAxes.transform((0, relative_y0))[1]  # Just need y
         data_y0 = ax.transData.inverted().transform((0, disp_y0))[1]

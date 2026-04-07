@@ -1,9 +1,9 @@
-import pysam, re
+import pysam, re, sys
 import pandas as pd
-
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
+# script classes
 from dosage import Dosage
 from plots import Plots
 from utility import Utility
@@ -80,8 +80,6 @@ class Baf:
         if end is None: end = Baf.get_chr_len(self.vcf, chrom)
 
         print(f"Searching {sample} for {gt} variants in chr{str(chrom)}:{int(start)}-{int(end)} using the following filters:")
-        for filter, value in self.filters.items():
-            print(f"\t{filter}: {value}")
         for rec in self.vcf.fetch(str(chrom), int(start), int(end)):
             sample_data = rec.samples[sample]
 
@@ -185,14 +183,23 @@ class Baf:
         allele_fractions = [] # Y axis
         variant_positions = [] # X axis
 
-        for pos in positions:
+        print("Calculating variant BAFs")
+        total = len(positions)
+        bar_width = 40
+        for i, pos in enumerate(positions):
+            # Update progress bar
+            progress = i / total
+            filled = int(bar_width * progress)
+            bar = "#" * filled + "-" * (bar_width - filled)
+            sys.stdout.write(f"\r[{bar}] {i}/{total} ({progress:.0%})")
+            sys.stdout.flush()
             for rec in self.vcf.fetch(str(chrom), pos -1, pos):
                 ad = rec.samples[sample]['AD']
                 if ad and sum(ad) > 0:  # Avoid division by zero
                     baf = ad[1] / sum(ad)  # Alt / (Ref + Alt) 
                     allele_fractions.append(baf)
                     variant_positions.append(pos)
-
+        print("\n")
         return (allele_fractions, variant_positions)
 
     def get_plot_data(self, sample: list, chrom: str, start: Optional[int]=1, end: Optional[int]=None, genotype: Optional[str]=None) -> tuple:
@@ -232,21 +239,16 @@ class Baf:
             plot_data = self.calc_baf(samples[0], str(chrom), shared_positions)
             Plots.plot_baf(plot_data, samples, str(chrom), capture='genome', start=start, end=end, genotype=genotype, outDir=outDir)
 
-    def call_get_genome_coordinates(self, genome_baf):
-        baf_cumulative_position = Dosage.get_genome_coordinates(genome_baf, 'position')
-        return baf_cumulative_position
-
-    def call_group_and_get_cumulative(self, genome_baf, baf_cumulative_position):
-        grouped_baf = Dosage.group_and_get_cumulative(genome_baf, baf_cumulative_position, 'position')
-        return grouped_baf
-
-    def get_genome_wide_baf(self, sample):
+    def get_genome_wide_baf(self, sample: str) -> pd.DataFrame: 
+        """
+            Return baf data for whole genome grouped by chromosome
+        """
         chr_baf_dfs = []
         for c in self.chrs:
             baf = self.get_plot_data(sample, c)
             chrom_baf = pd.DataFrame({'chrom': c, 'position': baf[1], 'allele_fraction': baf[0]})
             chr_baf_dfs.append(chrom_baf)
         genome_baf = pd.concat(chr_baf_dfs)
-        baf_cumulative_position = self.call_get_genome_coordinates(genome_baf)
-        grouped_baf = self.call_group_and_get_cumulative(genome_baf, baf_cumulative_position)
+        baf_cumulative_position = Dosage.get_genome_coordinates(genome_baf, 'position')
+        grouped_baf = Dosage.group_and_get_cumulative(genome_baf, baf_cumulative_position, 'position')
         return grouped_baf

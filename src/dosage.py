@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-
 from collections import OrderedDict
 from natsort import index_natsorted
 from pathlib import Path
@@ -27,6 +26,9 @@ class Dosage:
         self.grouped_read_depth = self.process_read_depth()
 
     def load_read_depth(self, readDepthFile: Path) -> pd.DataFrame:
+        """
+            Read the read depth file, removing non-standard contigs
+        """
         read_depth = pd.read_csv(readDepthFile, sep='\t', header=None, names=["chrom", "bin_start", "bin_end", "dosage", "stdev", "unnorm_dosage", "del_phred", "dup_phred"])
         # calculate 1 SD either way
         read_depth['stdev_pos'] = read_depth['stdev'] + 1
@@ -38,16 +40,25 @@ class Dosage:
         return read_depth
 
     def load_cnvs(self, cnvsFile: Path) -> pd.DataFrame:
+        """
+            Parse sample cnvs into a dataframe
+        """
         cnvs_df = pd.read_csv(cnvsFile, sep='\t', index_col=False, names=['chrom','start','end','type','bins','total_width_bins','phred','phred_by_bin','dosage','sample'])
         cnvs_df['size'] = cnvs_df['end'] - cnvs_df['start']
         cnvs_df['chrom'] = cnvs_df['chrom'].astype('str')
         return cnvs_df
     
     def load_regions(self, iscaFile: Path) -> pd.DataFrame:
+        """
+            Parse ISCA regions into a dataframe
+        """
         regions_df = pd.read_csv(iscaFile, sep="\t", index_col=False)
         return regions_df
 
     def format_cytobands(self, cytobandsFile: Path) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+            Parse cytobands file and set 
+        """
         # read and format hg38_cytoBand.txt
         cytobands = pd.read_csv(cytobandsFile, sep='\t', header=None, names=["chrom", "start", "end", "band", "value"])
         cytobands['chrom'] = cytobands['chrom'].astype(str).str.replace("chr", "")
@@ -65,12 +76,14 @@ class Dosage:
         return cytobands, df_acen
 
     @staticmethod
-    def get_genome_coordinates(dataframe, col_name):
+    def get_genome_coordinates(dataframe: pd.DataFrame, col_name: str) -> OrderedDict:
+        """
+            Return the cumulative position across the genome
+        """
         chr_pos = {}
         for name,group in dataframe.groupby('chrom', sort=False):
             chr_pos[name]=group[col_name].max().item()
         chr_pos_ordered = OrderedDict(chr_pos)
-        # get the cumulative position across the genome
         for k,v in chr_pos_ordered.items():
             if k == '1':
                 chr_pos_ordered[k] = chr_pos_ordered[k]
@@ -79,7 +92,10 @@ class Dosage:
         return chr_pos_ordered
 
     @staticmethod
-    def apply_genome_coordinates(row, ordered_dict, col_name):
+    def apply_genome_coordinates(row: pd.Series, ordered_dict: OrderedDict, col_name: str) -> int:
+        """
+            Convert chromosome-specific coordinates into a continuous genome-wide coordinate
+        """
         if row.get('chrom') == '1':
             genome_coord = row.get(col_name)
         else:
@@ -88,7 +104,10 @@ class Dosage:
         return genome_coord
 
     @staticmethod
-    def previous_value(dictionary, current_key):
+    def previous_value(dictionary: OrderedDict, current_key: str) -> int:
+        """
+            Return the value associated with the key preceding `current_key` in an OrderedDict.
+        """
         # Get the list of keys from the OrderedDict
         keys = list(dictionary.keys())
         # Get an index of the current key and offset it by -1
@@ -96,7 +115,10 @@ class Dosage:
         # return the previous key's value
         return dictionary[keys[index]]
 
-    def remove_centromeres(self, read_depth, centromeres, chrs):
+    def remove_centromeres(self, read_depth: pd.DataFrame, centromeres: pd.DataFrame, chrs: list) -> pd.DataFrame:
+        """
+            Remove centromeres from read depth dataframe using provided cytoband file
+        """
         for c in chrs:
             acen_start = centromeres[centromeres['chrom'] == c]['start'].min().item()
             acen_end = centromeres[centromeres['chrom'] == c]['end'].max().item()
@@ -104,22 +126,29 @@ class Dosage:
                                                 ((read_depth['chrom'] != c))]
         return read_depth
 
-    def limit_noise(self, read_depth, noise_cutoff):
+    def limit_noise(self, read_depth: pd.DataFrame, noise_cutoff: float) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+            Return 2 dataframes: 1 below threshold and 1 above
+        """
         high_noise = read_depth[read_depth['stdev'] >= noise_cutoff]
         clean = read_depth[read_depth['stdev'] < noise_cutoff]
         return high_noise, clean
 
     @staticmethod
-    def group_and_get_cumulative(read_depth, genome_coord_dict, col_name):
+    def group_and_get_cumulative(read_depth: pd.DataFrame, genome_coord_dict: OrderedDict, col_name: str) -> pd.DataFrame:
+        """
+            Return culmulative positions and group by chromosome
+        """
         # get the cumulative coordinate over the whole genome
         read_depth['genome_coordinate'] = read_depth.apply(lambda row: Dosage.apply_genome_coordinates(row, genome_coord_dict, col_name), axis=1)
-        # add an index for sequential bin, irrespective of chromosome
-        # sorted_df['ind'] = range(len(sorted_df))
         # group by chromosome for plotting
         grouped_df = read_depth.groupby('chrom', sort=False)
         return grouped_df
 
-    def process_read_depth(self):
+    def process_read_depth(self) -> pd.DataFrame:
+        """
+            Method to process read depth data
+        """
         # get the cumulative position across the genome. for compatibility with BAF coordinates
         cumulative_genome_position = self.get_genome_coordinates(self.readDepth, 'bin_end')
         # remove centromeres
@@ -127,6 +156,6 @@ class Dosage:
         # remove bins that have noise above our cut-off for CNV calling
         high_noise, low_noise = self.limit_noise(depth_sans_acens, self.noiseCutoff)
         # sort and group
-        grouped_read_depth = self.group_and_get_cumulative(low_noise, cumulative_genome_position, 'bin_end')
+        grouped_read_depth = Dosage.group_and_get_cumulative(low_noise, cumulative_genome_position, 'bin_end')
         return grouped_read_depth
 

@@ -49,6 +49,9 @@ class Carp:
 
     def run(self):
         """main function to direct this application"""
+        # print filters being used
+        for filter, value in self.filters.items():
+            print(f"\t{filter}: {value}")
         
         # generate baf plots only
         if self.mode == "baf":
@@ -120,7 +123,7 @@ class Carp:
                 Plots.pdf_report(pdf_name, self.samples, sample_genome_baf, dosage_dict, self.chrs, self.proband_id, self.capture)
             else:
                 print(f"Generating ideogram for Chromosome {self.location}")
-                ideogramPlot = Plots.make_chromosome_ideograms(self.samples, sample_genome_baf, dosage_dict, self.location, self.capture, self.proband_id)
+                ideogramPlot = Plots.make_chromosome_ideograms(self.samples, sample_genome_baf, dosage_dict, self.location, self.capture)
                 outname = self.outDir / f"{self.prefix}_chr{self.location}_ideogram_{self.date}.png"
                 ideogramPlot.savefig(outname)
                 ideogramPlot.close('all')                                     
