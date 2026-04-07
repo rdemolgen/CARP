@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import Optional, Tuple, Union
 
 # script classes
-from dosage import Dosage
-from plots import Plots
-from utility import Utility
+from .dosage import Dosage
+from .plots import Plots
+from .utility import Utility
 
 class Baf:
     """
@@ -79,7 +79,7 @@ class Baf:
         if start is None: start = 1
         if end is None: end = Baf.get_chr_len(self.vcf, chrom)
 
-        print(f"Searching {sample} for {gt} variants in chr{str(chrom)}:{int(start)}-{int(end)} using the following filters:")
+        print(f"Searching {sample} for {gt} variants in chr{str(chrom)}:{int(start)}-{int(end)}")
         for rec in self.vcf.fetch(str(chrom), int(start), int(end)):
             sample_data = rec.samples[sample]
 
@@ -202,7 +202,7 @@ class Baf:
         print("\n")
         return (allele_fractions, variant_positions)
 
-    def get_plot_data(self, sample: list, chrom: str, start: Optional[int]=1, end: Optional[int]=None, genotype: Optional[str]=None) -> tuple:
+    def get_plot_data(self, sample: str, chrom: str, start: Optional[int]=1, end: Optional[int]=None, genotype: Optional[str]=None) -> tuple:
         """
             Returns list of variat positions and their b-allele frequency
         """

@@ -1,16 +1,23 @@
 import datetime, logging, os, pysam, unittest
 
+from pandas.core.groupby.generic import DataFrameGroupBy
 from pathlib import Path
+from typing import Optional
 from src.baf import Baf
+from src.dosage import Dosage
 from src.utility import Utility
 
 class Test(unittest.TestCase):
 
     def setUp(self):
         self.now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.date = datetime.datetime.now().strftime("%Y-%m-%d")
         self.testDir = Path(f"{os.getcwd()}/tests")
+        self.testData = Path(f"/mnt/data1/resources/test_data/carp")
+        self.chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
         self.cwd = Path(os.getcwd())
         self.utility = Utility("test_baf_", "TwEx_EX2601234", self.now, self.testDir / "output")
+        self.outDir = self.utility.verify_dir(self.testDir / f"output_{self.date}")
         self.filters = {
             "no_filtering": False,
             "min_qual": 30,
@@ -19,9 +26,9 @@ class Test(unittest.TestCase):
             "min_mq": 40,
             "min_qd": 2,
         }
-        self.vcfPath = Path(self.testDir / "data" / "TwEx2_EX2601743-TwEx2_EX2601744-TwEx2_EX2601745.vcf.gz")
-        self.vcfFile = pysam.VariantFile(str(self.vcfPath))    
-        self.baf = Baf(self.utility.logger, self.filters, self.vcfFile)
+        self.vcfPath = Path(self.testData / "TwEx2_EX2601743-TwEx2_EX2601744-TwEx2_EX2601745.vcf.gz")   
+        self.baf = Baf(self.utility.logger, self.filters, self.vcfPath, self.chrs)
+        self.vcf = self.baf.vcf
 
     def tearDown(self):
         # Reconstruct the log name used in setup_logging
@@ -33,11 +40,12 @@ class Test(unittest.TestCase):
             handler.close()
             logger.removeHandler(handler)
     
-    def cleanUp(self, in_dir: Path):
+    def cleanUp(self, in_dir: Path, content_only: Optional[bool]=False):
         """Remove directory and contents"""
         for f in in_dir.glob("*"):
             f.unlink(missing_ok=True)
-        in_dir.rmdir()
+        if not content_only:
+            in_dir.rmdir()
 
     def test_load_vcf(self):
         """
@@ -52,8 +60,8 @@ class Test(unittest.TestCase):
         """
         sample_str = "TwEx2_EX2601743 TwEx2_EX2601744 TwEx2_EX2601745"
 
-        userInput = self.baf.get_samples(sample_str)
-        fromVcf = self.baf.get_samples(sample_str)
+        userInput = self.baf.get_samples(self.vcf, sample_str)
+        fromVcf = self.baf.get_samples(self.vcf, None)
         expOutput = sample_str.split(" ")
         self.assertEqual(userInput, expOutput)
         self.assertEqual(fromVcf, expOutput)
@@ -66,19 +74,21 @@ class Test(unittest.TestCase):
         self.assertEqual((chr, start, end), (None, None, None))
         with self.assertRaises(ValueError):
             chr, start, end = self.baf.get_location("")
+        chr, start, end = self.baf.get_location("1:1234-5678")
+        self.assertEqual((chr, start, end), ("1", "1234", "5678"))
 
     def test_chr_len(self):
         """
             Return chromosome length from vcf header
         """
-        chr1 = self.baf.get_chr_len(1)
-        chr21 = self.baf.get_chr_len(21)
-        chrX = self.baf.get_chr_len("X")
+        chr1 = self.baf.get_chr_len(self.vcf, 1)
+        chr21 = self.baf.get_chr_len(self.vcf, 21)
+        chrX = self.baf.get_chr_len(self.vcf, "X")
         self.assertEqual(chr1, 248956422)
         self.assertEqual(chr21, 46709983)
         self.assertEqual(chrX, 156040895)
         with self.assertRaises(ValueError):
-            self.baf.get_chr_len("A")
+            self.baf.get_chr_len(self.vcf, "A")
 
     def test_get_variants(self):
         """
@@ -162,27 +172,6 @@ class Test(unittest.TestCase):
         self.assertEqual(self.baf.genotypes(None), None)
         self.assertEqual(self.baf.genotypes("0/1 1/1 0/0"), ["0/1", "1/1", "0/0"])
 
-    def test_get_genotype(self):
-        """
-            Returns genotype from string as either tuple or verbose string
-        """
-        ref = self.baf.get_genotype("0/0", False)
-        refL = self.baf.get_genotype("0/0", True)
-        het = self.baf.get_genotype("0/1", False)
-        hetL = self.baf.get_genotype("0/1", True)
-        hom = self.baf.get_genotype("1/1", False)
-        homL = self.baf.get_genotype("1/1", True)
-        unknownL = self.baf.get_genotype("1/2", True)
-        self.assertEqual(ref, (0, 0))
-        self.assertEqual(refL, "reference")
-        self.assertEqual(het, (0, 1))
-        self.assertEqual(hetL, "heterozygous")
-        self.assertEqual(hom, (1, 1))
-        self.assertEqual(homL, "homozygous")
-        with self.assertRaises(ValueError):
-            self.baf.get_genotype("1/2", False)
-        self.assertEqual(unknownL, "all")
-
     def test_genotype_combinations(self):
         """
             Return genotype combinations to automatically generate standard plots
@@ -238,4 +227,78 @@ class Test(unittest.TestCase):
         self.assertEqual(len(pos), 10)
         self.assertEqual(baf, [0.17229729729729729, 0.8170289855072463, 0.7935943060498221, 0.5125, 0.4462809917355372, 0.42857142857142855, 0.40707964601769914, 0.27906976744186046, 0.46206896551724136, 0.6])
         # indel and snp that are covered by the same position, 10413783 
-        self.assertEqual(pos, [10413783, 10413783, 10602110, 14108913, 14109044, 14185882, 14186025, 14186143, 14210899, 14211011])       
+        self.assertEqual(pos, [10413783, 10413783, 10602110, 14108913, 14109044, 14185882, 14186025, 14186143, 14210899, 14211011])
+
+    def test_get_plot_data(self):
+        """
+            Returns list of variat positions and their b-allele frequency 
+        """
+        samples = self.baf.get_samples(self.vcf, None)
+        sample = samples[0]
+        chrom = "21"
+        start = 10413729
+        end = 14226797
+        genotypes = None
+        af, pos = self.baf.get_plot_data(sample, chrom, start, end, genotypes)
+        self.assertEqual(len(af), 86)
+        self.assertEqual(len(pos), 86)
+        self.assertEqual((af[0], pos[0]), (0.2125984251968504,10413733))
+
+    def test_run_single_plots(self):
+        """
+           Automatically generate different genotype plots for each sample  
+        """
+        samples = self.baf.get_samples(self.vcf, None)
+        chrom = "21"
+        start = 10413729
+        end = 14226797
+        outDir = self.utility.verify_dir(self.outDir / "run_single_plot")
+        genotypes = None
+        self.baf.run_single_plots(samples, chrom, start, end, outDir, genotypes)
+        plots = [f for f in outDir.glob("*")]
+        plots.sort()
+        self.assertEqual(len(plots), 9)
+        self.assertAlmostEqual(plots[0].name, "TwEx2_EX2601743_all_chr21.10413729-14226797_BAF.png")
+        self.cleanUp(outDir, True)
+        samples = samples[:2]
+        genotypes = ["0/1", "1/1"]
+        self.baf.run_single_plots(samples, chrom, start, end, outDir, genotypes)
+        plots = [f for f in outDir.glob("*")]
+        plots.sort()
+        self.assertEqual(len(plots), 4)
+        self.assertAlmostEqual(plots[0].name, "TwEx2_EX2601743_het_chr21.10413729-14226797_BAF.png")
+        self.cleanUp(outDir)
+
+    def test_run_joint_call_plots(self):
+        """
+            Generate joint baf plots. This can be a user defined by (sample, genotypes) input or all possible genotype combinations
+        """
+        samples = self.baf.get_samples(self.vcf, None)
+        chrom = "21"
+        start = 10413729
+        end = 14226797
+        outDir = self.utility.verify_dir(self.outDir / "joint_call_plots")
+        genotypes = None
+        self.baf.run_joint_call_plots(samples, chrom, start, end, outDir, genotypes)
+        plots = [f for f in outDir.glob("*")]
+        plots.sort()
+        self.assertEqual(len(plots), 8)
+        self.assertAlmostEqual(plots[0].name, "TwEx2_EX2601743_het_TwEx2_EX2601744_het_TwEx2_EX2601745_ref_chr21.10413729-14226797_BAF.png")
+        self.cleanUp(outDir, True)
+        genotypes = ["0/1", "0/0", "1/1"]
+        self.baf.run_joint_call_plots(samples, chrom, start, end, outDir, genotypes)
+        plots = [f for f in outDir.glob("*")]
+        self.assertEqual(len(plots), 1)
+        self.assertAlmostEqual(plots[0].name, "TwEx2_EX2601743_het_TwEx2_EX2601744_ref_TwEx2_EX2601745_hom_chr21.10413729-14226797_BAF.png")
+        self.cleanUp(outDir)
+    
+    def test_get_genome_wide_baf(self):
+        """
+            Return baf data for whole genome grouped by chromosome
+        """
+        samples = self.baf.get_samples(self.vcf, None)[0]
+        results = self.baf.get_genome_wide_baf(samples)
+        self.assertEqual(type(results), DataFrameGroupBy)
+        self.assertEqual(len(results), 24)
+        self.assertEqual(list(results.groups.keys()), self.chrs)
+
