@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from collections import OrderedDict
 from natsort import index_natsorted
+from pandas.core.groupby.generic import DataFrameGroupBy
 from pathlib import Path
 from typing import Tuple
 
@@ -81,7 +82,7 @@ class Dosage:
             Return the cumulative position across the genome
         """
         chr_pos = {}
-        for name,group in dataframe.groupby('chrom', sort=False):
+        for name, group in dataframe.groupby('chrom', sort=False):
             chr_pos[name]=group[col_name].max().item()
         chr_pos_ordered = OrderedDict(chr_pos)
         for k,v in chr_pos_ordered.items():
@@ -135,7 +136,7 @@ class Dosage:
         return high_noise, clean
 
     @staticmethod
-    def group_and_get_cumulative(read_depth: pd.DataFrame, genome_coord_dict: OrderedDict, col_name: str) -> pd.DataFrame:
+    def group_and_get_cumulative(read_depth: pd.DataFrame, genome_coord_dict: OrderedDict, col_name: str) -> DataFrameGroupBy:
         """
             Return culmulative positions and group by chromosome
         """
