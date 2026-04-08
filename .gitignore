@@ -2,3 +2,7 @@ __pycache__/
 *pyc
 dev_data/
 venv/
+.coverage
+htmlcov/
+logs/
+tests/data

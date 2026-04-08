@@ -65,6 +65,9 @@ Watch this space
 
 #### Unit tests
 Run tests `python -m unittest`
+Coverage
+- `coverage run -m unittest -v`
+- `coverage report -m` or `coverage html`
 
 ```                                                                                                                                                                                  
                                                    ++                                               
