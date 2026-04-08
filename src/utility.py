@@ -5,7 +5,7 @@ from typing import Optional
 class Utility:
 
     def __init__(self, prefix, proband_id, now, logPath=None):
-        # self.catch_the_carp(Path("resources") / "carp")
+        self.catch_the_carp(Path("resources") / "carp")
         self.logger = self.setup_logging(prefix, proband_id, now, logPath)
 
     def catch_the_carp(self, file_path: Path, delay: float = 0.001):

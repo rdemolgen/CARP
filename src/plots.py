@@ -8,7 +8,7 @@ from matplotlib.axes import Axes
 from matplotlib.backends.backend_pdf import PdfPages
 from pathlib import Path
 from typing import Optional, Tuple
-from utility import Utility
+from .utility import Utility
 
 class Plots:
 
@@ -91,6 +91,7 @@ class Plots:
         plt.subplots_adjust(wspace=0, hspace=0, bottom=0.12, right=0.99)
         return plt
 
+    @staticmethod
     def plot_ideogram_ax(ax: Axes, capture: str, dosage: dict) -> Axes:
         """
             Plot all subplots
@@ -161,7 +162,7 @@ class Plots:
         # Extract plot data
         try:
             allele_fractions, variant_positions = plot_data
-        except:
+        except (TypeError, ValueError, KeyError):
             variant_positions = plot_data['position']
             allele_fractions = plot_data['allele_fraction']
 

@@ -1,4 +1,4 @@
-import datetime, logging, os, unittest, re, sys
+import datetime, logging, os, unittest, re
 
 from pathlib import Path
 from src.utility import Utility
@@ -7,9 +7,10 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         self.now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        self.testDir = Path(f"{os.getcwd()}/tests")
+        self.date = datetime.datetime.now().strftime("%Y-%m-%d")
         self.cwd = Path(os.getcwd())
-
+        self.testDir = self.cwd / "tests"
+        self.testData = Path(f"/mnt/data1/resources/test_data/carp")
         self.utility = Utility("test_utility_", "TwEx_EX2601234", self.now, self.testDir / "output")
     
     def tearDown(self):
@@ -27,6 +28,27 @@ class Test(unittest.TestCase):
         for f in in_dir.glob("*"):
             f.unlink(missing_ok=True)
         in_dir.rmdir()
+
+    def test_get_genotype(self):
+        """
+            Returns genotype from string as either tuple or verbose string
+        """
+        ref = self.utility.get_genotype("0/0", False)
+        refL = self.utility.get_genotype("0/0", True)
+        het = self.utility.get_genotype("0/1", False)
+        hetL = self.utility.get_genotype("0/1", True)
+        hom = self.utility.get_genotype("1/1", False)
+        homL = self.utility.get_genotype("1/1", True)
+        unknown = self.utility.get_genotype("1/2", False)
+        unknownL = self.utility.get_genotype("1/2", True)
+        self.assertEqual(ref, (0, 0))
+        self.assertEqual(refL, "reference")
+        self.assertEqual(het, (0, 1))
+        self.assertEqual(hetL, "heterozygous")
+        self.assertEqual(hom, (1, 1))
+        self.assertEqual(homL, "homozygous")  
+        self.assertEqual(unknown, None)        
+        self.assertEqual(unknownL, "all")
 
     def test_capture(self):
         """Test for setting capture"""

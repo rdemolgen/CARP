@@ -4,7 +4,6 @@ from pandas.core.groupby.generic import DataFrameGroupBy
 from pathlib import Path
 from typing import Optional
 from src.baf import Baf
-from src.dosage import Dosage
 from src.utility import Utility
 
 class Test(unittest.TestCase):
@@ -12,10 +11,10 @@ class Test(unittest.TestCase):
     def setUp(self):
         self.now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         self.date = datetime.datetime.now().strftime("%Y-%m-%d")
-        self.testDir = Path(f"{os.getcwd()}/tests")
+        self.cwd = Path(os.getcwd())
+        self.testDir = self.cwd / "tests"
         self.testData = Path(f"/mnt/data1/resources/test_data/carp")
         self.chrs = ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"]
-        self.cwd = Path(os.getcwd())
         self.utility = Utility("test_baf_", "TwEx_EX2601234", self.now, self.testDir / "output")
         self.outDir = self.utility.verify_dir(self.testDir / f"output_{self.date}")
         self.filters = {

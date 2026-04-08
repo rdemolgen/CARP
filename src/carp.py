@@ -1,11 +1,9 @@
 import argparse, datetime, re
 
-from pathlib import Path
-
-from baf import Baf
-from dosage import Dosage
-from plots import Plots
-from utility import Utility
+from .baf import Baf
+from .dosage import Dosage
+from .plots import Plots
+from .utility import Utility
 
 class Carp:
 
@@ -43,9 +41,6 @@ class Carp:
         # dosage
         self.cytoFile = args.cyto
         self.iscaFile = args.isca
-
-        self.run()
-
 
     def run(self):
         """main function to direct this application"""
@@ -106,8 +101,8 @@ class Carp:
                 sample_dosage = Dosage(
                     readDepthFile=read_depth_files[sample],
                     cnvsFile=cnvs_files[sample],
-                    cytobandsFile=self.cytoFile, #'../hg38_cytoBand.txt'
-                    iscaFile=self.iscaFile, #'web_ClinGen_region_curation_list_GRCh38_20250425.tsv'
+                    cytobandsFile=self.cytoFile,
+                    iscaFile=self.iscaFile,
                     sample=sample,
                     prefix=self.prefix,
                     chrs=self.chrs,
@@ -162,6 +157,8 @@ def main():
 
     # Initialise the CARP
     carp = Carp(args)
+    # Run CARP
+    carp.run()
     
 if __name__ == "__main__":
     main()
