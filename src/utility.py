@@ -28,7 +28,7 @@ class Utility:
             logPath.mkdir(parents=True, exist_ok=True)
             logPath.chmod(0o775) 
         
-        logName = f"{prefix}{proband_id}_{now}"
+        logName = f"{prefix}_{proband_id}_{now}"
         logger = logging.getLogger(logName)
         logger.setLevel(logging.INFO)
         logger.propagate = False
@@ -72,6 +72,7 @@ class Utility:
         except TypeError:
             print(f"Directory: '{dirStr}' not provided or invalid")
             dir = Path(os.getcwd())
+            print(f"Using {dir}")
 
         if not dir.is_dir():
             print(f"{str(dir)} folder created")

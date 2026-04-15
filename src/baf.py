@@ -79,7 +79,9 @@ class Baf:
         if start is None: start = 1
         if end is None: end = Baf.get_chr_len(self.vcf, chrom)
 
-        print(f"Searching {sample} for {gt} variants in chr{str(chrom)}:{int(start)}-{int(end)}")
+        msg = f"Searching {sample} for {gt} variants in chr{str(chrom)}:{int(start)}-{int(end)}"
+        self.logger.info(msg)
+        print(msg)
         for rec in self.vcf.fetch(str(chrom), int(start), int(end)):
             sample_data = rec.samples[sample]
 
@@ -119,7 +121,9 @@ class Baf:
 
             positions.append(rec.pos)
 
-        print(f"Number of matching variants: {len(positions)}")
+        msg = f"Number of matching variants: {len(positions)}"
+        self.logger.info(msg)
+        print(msg)
         return {'id': sample, 'positions': positions, 'genotype': genotype}
 
     @staticmethod
@@ -160,6 +164,7 @@ class Baf:
             ]
         else:
             msg = f"Unexpected number of samples: {str(no_samples)}"
+            self.logger.info(msg)
             raise ValueError(msg)
 
     def intersect_sample_variants(self, sample_pos: list) -> list:
@@ -183,23 +188,25 @@ class Baf:
         allele_fractions = [] # Y axis
         variant_positions = [] # X axis
 
-        print("Calculating variant BAFs")
-        total = len(positions)
-        bar_width = 40
+        msg = "Calculating variant BAFs"
+        self.logger.info(msg)
+        print(msg)
+        # total = len(positions)
+        # bar_width = 40
         for i, pos in enumerate(positions):
             # Update progress bar
-            progress = i / total
-            filled = int(bar_width * progress)
-            bar = "#" * filled + "-" * (bar_width - filled)
-            sys.stdout.write(f"\r[{bar}] {i}/{total} ({progress:.0%})")
-            sys.stdout.flush()
+            # progress = i / total
+            # filled = int(bar_width * progress)
+            # bar = "#" * filled + "-" * (bar_width - filled)
+            # sys.stdout.write(f"\r[{bar}] {i}/{total} ({progress:.0%})")
+            # sys.stdout.flush()
             for rec in self.vcf.fetch(str(chrom), pos -1, pos):
                 ad = rec.samples[sample]['AD']
                 if ad and sum(ad) > 0:  # Avoid division by zero
                     baf = ad[1] / sum(ad)  # Alt / (Ref + Alt) 
                     allele_fractions.append(baf)
                     variant_positions.append(pos)
-        print("\n")
+
         return (allele_fractions, variant_positions)
 
     def get_plot_data(self, sample: str, chrom: str, start: Optional[int]=1, end: Optional[int]=None, genotype: Optional[str]=None) -> tuple:
