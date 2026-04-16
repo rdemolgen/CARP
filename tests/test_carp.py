@@ -125,6 +125,7 @@ class Test(unittest.TestCase):
     @patch("src.carp.Utility")
     def test_mode_baf_multiple_samples_no_genotype(self, mock_utility_cls, mock_baf_cls):
         self.args.mode = "baf"
+        self.args.proband_id = "WGS_EX2601235"
 
         mock_utility = self.make_utility_mock()
         mock_utility_cls.return_value = mock_utility
@@ -142,7 +143,7 @@ class Test(unittest.TestCase):
             ["WGS_EX2601234", "WGS_EX2601235"], "1", 1, None, self.args.outDir
         )
         mock_baf.run_joint_call_plots.assert_called_once_with(
-            ["WGS_EX2601234", "WGS_EX2601235"], "1", 1, None, self.args.outDir
+            self.args.proband_id, ["WGS_EX2601234", "WGS_EX2601235"], "1", 1, None, self.args.outDir
         )
 
     @patch("src.carp.Baf")
@@ -173,6 +174,7 @@ class Test(unittest.TestCase):
     def test_mode_baf_matching_samples_and_genotypes_runs_joint(self, mock_utility_cls, mock_baf_cls):
         self.args.mode = "baf"
         self.args.genotypes = "0/1 1/1"
+        self.args.proband_id = "WGS_EX2601235"
 
         mock_utility = self.make_utility_mock()
         mock_utility_cls.return_value = mock_utility
@@ -187,7 +189,7 @@ class Test(unittest.TestCase):
         carp.run()
 
         mock_baf.run_joint_call_plots.assert_called_once_with(
-            ["WGS_EX2601234", "WGS_EX2601235"], "1", 1, None, self.args.outDir, ["het", "hom"]
+            self.args.proband_id, ["WGS_EX2601234", "WGS_EX2601235"], "1", 1, None, self.args.outDir, ["het", "hom"]
         )
         mock_baf.run_single_plots.assert_not_called()
 

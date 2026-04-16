@@ -273,19 +273,20 @@ class Test(unittest.TestCase):
             Generate joint baf plots. This can be a user defined by (sample, genotypes) input or all possible genotype combinations
         """
         samples = self.baf.get_samples(self.vcf, None)
+        indexSample = samples[0]
         chrom = "21"
         start = 10413729
         end = 14226797
         outDir = self.utility.verify_dir(self.outDir / "joint_call_plots")
         genotypes = None
-        self.baf.run_joint_call_plots(samples, chrom, start, end, outDir, genotypes)
+        self.baf.run_joint_call_plots(indexSample, samples, chrom, start, end, outDir, genotypes)
         plots = [f for f in outDir.glob("*")]
         plots.sort()
         self.assertEqual(len(plots), 8)
         self.assertAlmostEqual(plots[0].name, "TwEx2_EX2601743_het_TwEx2_EX2601744_het_TwEx2_EX2601745_ref_chr21.10413729-14226797_BAF.png")
         self.cleanUp(outDir, True)
         genotypes = ["0/1", "0/0", "1/1"]
-        self.baf.run_joint_call_plots(samples, chrom, start, end, outDir, genotypes)
+        self.baf.run_joint_call_plots(indexSample, samples, chrom, start, end, outDir, genotypes)
         plots = [f for f in outDir.glob("*")]
         self.assertEqual(len(plots), 1)
         self.assertAlmostEqual(plots[0].name, "TwEx2_EX2601743_het_TwEx2_EX2601744_ref_TwEx2_EX2601745_hom_chr21.10413729-14226797_BAF.png")

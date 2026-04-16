@@ -229,7 +229,7 @@ class Baf:
                 plot_data = self.get_plot_data(sample, chrom, start, end, genotype)
                 Plots.plot_baf(plot_data, sample, str(chrom), capture='genome', start=start, end=end, genotype=genotype, outDir=outDir)
 
-    def run_joint_call_plots(self, samples: list, chrom: str, start: int, end: int, outDir: Path, genotypes: Optional[list]=None):
+    def run_joint_call_plots(self, indexSample: str, samples: list, chrom: str, start: int, end: int, outDir: Path, genotypes: Optional[list]=None):
         """
             Generate joint baf plots. This can be a user defined by (sample, genotypes) input or all possible genotype combinations
         """
@@ -243,7 +243,7 @@ class Baf:
             for sample, geno in zip(samples, genotype):
                 samples_var_pos.append(self.get_variants(sample, str(chrom), start, end, geno))
             shared_positions = self.intersect_sample_variants(samples_var_pos)
-            plot_data = self.calc_baf(samples[0], str(chrom), shared_positions)
+            plot_data = self.calc_baf(indexSample, str(chrom), shared_positions)
             Plots.plot_baf(plot_data, samples, str(chrom), capture='genome', start=start, end=end, genotype=genotype, outDir=outDir)
 
     def get_genome_wide_baf(self, sample: str) -> pd.DataFrame: 

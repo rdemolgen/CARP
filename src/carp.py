@@ -67,14 +67,14 @@ class Carp:
                 else:
                     print(f"Automatically generating single sample and joint BAF plots for {self.samples}.")
                     self.baf.run_single_plots(self.samples, self.chrom, self.start, self.end, self.outDir)
-                    self.baf.run_joint_call_plots(self.samples, self.chrom, self.start, self.end, self.outDir)
+                    self.baf.run_joint_call_plots(self.proband_id, self.samples, self.chrom, self.start, self.end, self.outDir)
             else:
                 if len(self.samples) == 1 and len(self.genotypes) == 1:
                     print(f"Generating single BAF plot for {self.samples} with {self.genotypes} genotype.")
                     self.baf.run_single_plots(self.samples, self.chrom, self.start, self.end, self.outDir, self.genotypes)
                 elif len(self.samples) == len(self.genotypes):
                     print(f"Generating joint call BAF plots for {self.samples} with {self.genotypes} genotypes.")
-                    self.baf.run_joint_call_plots(self.samples, self.chrom, self.start, self.end, self.outDir, self.genotypes)
+                    self.baf.run_joint_call_plots(self.proband_id, self.samples, self.chrom, self.start, self.end, self.outDir, self.genotypes)
                 else:
                     print("Number of samples and genotypes do not match")  
                     raise SystemExit                     
