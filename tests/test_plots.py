@@ -106,7 +106,7 @@ class Test(unittest.TestCase):
         self.assertIs(result, plt)
         fig = plt.gcf()
         self.assertEqual(len(fig.axes), 2)
-        self.assertEqual(fig.axes[0].get_ylim(), (-0.1, 2.1))
+        self.assertEqual(fig.axes[0].get_ylim(), (-0.1, 2.2))
 
     def test_plot_ideogram_ax(self):
         fig, ax = plt.subplots()

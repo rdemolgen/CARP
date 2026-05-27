@@ -38,8 +38,10 @@ class Plots:
         '''
         n_rows, n_cols = 2, 1
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(24, 12), layout="compressed", sharex=True)
-        axes[0].set_ylim([-0.1, 2.1])
-        axes[0].set_yticks(np.arange(0, 2, 0.25))
+        dosage_data = dosage.grouped_read_depth.max()
+        ymin, ymax = Plots.get_ylims(dosage_data["dosage"])
+        axes[0].set_ylim(ymin, ymax)
+        axes[0].set_yticks(np.arange(ymin, ymax, 0.25))
         Plots.plot_ideogram_ax(axes[0], capture, dosage)
         # Set custom Y-axis ticks
         custom_ticks = [0, 0.25, 0.337, 0.5, 0.667, 0.75, 1]
