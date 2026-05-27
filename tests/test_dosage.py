@@ -138,23 +138,22 @@ class Test(unittest.TestCase):
 
     def test_remove_centromeres(self):
         read_depth = pd.DataFrame({
-            "chrom": ["1", "1", "1", "2"],
-            "bin_start": [100, 150, 250, 100],
-            "bin_end":   [120, 170, 270, 120],
-            "stdev":     [0.1, 0.1, 0.1, 0.1]
+            "chrom": ["1", "1", "1", "1", "1", "2", "2", "3", "3"],
+            "bin_start": [100, 180, 240, 280, 350, 450, 999, 900, 100],
+            "bin_end":   [150, 220, 290, 330, 400, 500, 1999, 950, 150],
+            "stdev":     [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
         })
 
         centromeres = pd.DataFrame({
-            "chrom": ["1", "1"],
-            "start": [140, 160],
-            "end":   [180, 220]
+            "chrom": ["1", "2", "3"],
+            "start": [200, 400, 800],
+            "end":   [300, 600, 1000]
         })
 
-        result = self.dosage.remove_centromeres(read_depth, centromeres, ["1"])
+        result = self.dosage.remove_centromeres(read_depth, centromeres, ["1", "2"])
 
-        # bin_start 150 falls inside centromere and should be removed
-        self.assertEqual(len(result), 3)
-        self.assertListEqual(result["bin_start"].tolist(), [100, 250, 100])
+        self.assertEqual(len(result), 7)
+        self.assertListEqual(result["bin_start"].tolist(), [100, 180, 280, 350, 999, 900, 100])
 
     def test_limit_noise(self):
         read_depth = pd.DataFrame({

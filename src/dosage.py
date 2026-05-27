@@ -123,8 +123,15 @@ class Dosage:
         for c in chrs:
             acen_start = centromeres[centromeres['chrom'] == c]['start'].min().item()
             acen_end = centromeres[centromeres['chrom'] == c]['end'].max().item()
-            read_depth = read_depth[ ((read_depth['chrom'] == c) & ((read_depth['bin_start'] < acen_start) | (read_depth['bin_start'] >= acen_end))) | 
-                                                ((read_depth['chrom'] != c))]
+            # remove bins that are wholey within a centromere
+            read_depth = read_depth[
+                (read_depth["chrom"] != c)
+                |
+                ~(
+                    (read_depth["bin_start"] >= acen_start)
+                    & (read_depth["bin_end"] <= acen_end)
+                )
+            ]
         return read_depth
 
     def limit_noise(self, read_depth: pd.DataFrame, noise_cutoff: float) -> Tuple[pd.DataFrame, pd.DataFrame]:
