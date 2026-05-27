@@ -22,7 +22,7 @@ class Baf:
     @staticmethod
     def get_samples(vcfFile: pysam.VariantFile, samples: str) -> list:
         """
-            Return list of samples, assuming proband is the first sample id
+            Get's list of samples from vcf if none are provided by the user.
         """
         if samples == None:
             print(f"Samples from VCF file: {list(vcfFile.header.samples)}")
@@ -48,7 +48,7 @@ class Baf:
             print(f"Genomic Location set to '{location}', processing whole genome")
             return None, None, None
     
-        match = re.match(r"^(1?[0-9]|2[0-2]|X|Y|MT)(?::(\d+)-(\d+))?$", location)
+        match = re.match(r"^(1?[0-9]|2[0-2]|X|Y)(?::(\d+)-(\d+))?$", location)
 
         if not match:
             msg = f"Genomic location incorrectly formatted, '{location}'"
@@ -62,7 +62,7 @@ class Baf:
             Return chromosome length from vcf header
         """
         chrom_dict = {str(i): i - 1 for i in range(1, 23)}
-        chrom_dict.update({'X': 22, 'Y': 23, 'MT': 24})
+        chrom_dict.update({'X': 22, 'Y': 23})
 
         try:
             return vcfFile.header.contigs[chrom_dict[str(chrom)]].length

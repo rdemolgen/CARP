@@ -35,7 +35,8 @@ class Carp:
         vcf_regex = (
             rf"^(?!.*gnomad_filtered)"
             rf"(?:WGS_EX\d{{7}}-)*{re.escape(self.proband_id)}"
-            rf"(?:-WGS_EX\d{{7}})*\.vcf\.gz$"
+            rf"(?:(?:WGS_EX\d{{7}}|TwEx\d*_EX\d{{7}})-)*{re.escape(self.proband_id)}"
+            rf"(?:-(?:WGS_EX\d{{7}}|TwEx\d*_EX\d{{7}}))*\.vcf\.gz$"
         )
         self.vcfFile = self.utility.find_file(self.inDir, vcf_regex)
         self.baf = Baf(self.logger, self.filters, self.vcfFile, self.chrs)

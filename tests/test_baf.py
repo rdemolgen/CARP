@@ -163,6 +163,16 @@ class Test(unittest.TestCase):
             "0/1"
         )
         self.assertEqual(len(results["positions"]), 4)
+        # test that ./. genotypes are ignored
+        for gt in ["0/0", "0/1", "1/1", "all"]:
+            results = self.baf.get_variants(
+                "TwEx2_EX2601743",
+                21,
+                45990497,
+                45990497,
+                gt
+            )  
+            self.assertEqual(len(results["positions"]), 0)
 
     def test_genotypes(self):
         """
