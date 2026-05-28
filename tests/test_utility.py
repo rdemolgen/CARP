@@ -77,10 +77,23 @@ class Test(unittest.TestCase):
             in_dir = Path(self.cwd) / "tests" / "input" / "vcfs"
             in_dir.mkdir(mode=0o777, parents=True, exist_ok=True)
 
-            vcf_pattern = rf'^(?!.*gnomad_filtered).*{re.escape(proband_id)}.*\.vcf\.gz$'
+            sample_id = r"(?:WGS_EX\d{7}|TwEx\d*_EX\d{7})"
+            vcf_pattern = (
+                rf"^(?!.*gnomad_filtered)"
+                rf"(?=.*(?:^|-){re.escape(proband_id)}(?:-|\.vcf\.gz$))"
+                rf"{sample_id}"
+                rf"(?:-{sample_id})*"
+                rf"\.vcf\.gz$"
+            )
+
             # no matches
             with self.assertRaises(FileNotFoundError):
                 self.utility.find_file(in_dir, vcf_pattern)
+            # file with no proband_id in filename
+            vcf_file0 = in_dir / "WGS_EX2601234.vcf.gz"
+            vcf_file0.write_text("test vcf")           
+            with self.assertRaises(FileNotFoundError):
+                self.utility.find_file(in_dir, vcf_pattern)           
             # correct match
             vcf_file = in_dir / "TwEx2_EX2601746-TwEx2_EX2601747-TwEx2_EX2601748.vcf.gz"
             vcf_file.write_text("test vcf")

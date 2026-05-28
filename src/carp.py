@@ -32,13 +32,15 @@ class Carp:
         }
         
         self.capture = self.utility.set_capture(self.proband_id)
-        vcf_regex = (
+        sample_id = r"(?:WGS_EX\d{7}|TwEx\d*_EX\d{7})"
+        self.vcf_regex = (
             rf"^(?!.*gnomad_filtered)"
-            rf"(?:WGS_EX\d{{7}}-)*{re.escape(self.proband_id)}"
-            rf"(?:(?:WGS_EX\d{{7}}|TwEx\d*_EX\d{{7}})-)*{re.escape(self.proband_id)}"
-            rf"(?:-(?:WGS_EX\d{{7}}|TwEx\d*_EX\d{{7}}))*\.vcf\.gz$"
+            rf"(?=.*(?:^|-){re.escape(self.proband_id)}(?:-|\.vcf\.gz$))"
+            rf"{sample_id}"
+            rf"(?:-{sample_id})*"
+            rf"\.vcf\.gz$"
         )
-        self.vcfFile = self.utility.find_file(self.inDir, vcf_regex)
+        self.vcfFile = self.utility.find_file(self.inDir, self.vcf_regex)
         self.baf = Baf(self.logger, self.filters, self.vcfFile, self.chrs)
         self.samples = Baf.get_samples(self.baf.vcf, args.samples)
         self.genotypes = Baf.genotypes(args.genotypes)

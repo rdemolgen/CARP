@@ -14,7 +14,7 @@ workflow Carp {
         String outPrefix = ""
         File cytobands = "dx://project-G729Kkj4fq4Q9X1BPy0807bK:file-GGbXZvQ4fq4pKZZ54kQ3QBKB"
         File iscaRegions = "dx://project-G729Kkj4fq4Q9X1BPy0807bK:file-J6PKpK84fq4gqYJV4ff3XKFz"
-        String dockerCarp = "dx://project-G729Kkj4fq4Q9X1BPy0807bK:file-J7P5Xj84fq4jx7fP6Pg5Jvz2"
+        String dockerCarp = "dx://project-G729Kkj4fq4Q9X1BPy0807bK:file-J8G6GzQ4fq4Xg1q8kkg4yjy0"
     }
 
     String defaultPrefix = if outPrefix == "" then family else outPrefix
@@ -122,8 +122,8 @@ task runCarp {
     String iscaFile = basename(iscaRegions)
 
     Int disk_gb = ceil(2*size(arrayCnvs, "GiB") + size(arrayDataFiles, "GiB") + size(familyVcf, "GiB")) + 5
-    String samplesFlag = if defined(samples) then "--samples " + select_first([samples]) else ""
-    String genotypesFlag = if defined(genotypes) then "--genotypes " + select_first([genotypes]) else ""
+    String samplesFlag = if defined(samples) then "--samples '" + select_first([samples]) + "'" else ""
+    String genotypesFlag = if defined(genotypes) then "--genotypes '" + select_first([genotypes]) + "'" else ""
     String optionsFlag = if defined(options) then  select_first([options]) else ""
 
     command <<<

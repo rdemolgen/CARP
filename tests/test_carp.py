@@ -14,6 +14,7 @@ class Test(unittest.TestCase):
     def setUp(self):
         now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         self.testDir = Path(f"{os.getcwd()}/tests")
+        self.testData = Path(f"/mnt/data1/resources/test_data/carp")
         self.cwd = Path(os.getcwd())
 
         self.args = MagicMock(spec=argparse.Namespace)
@@ -330,3 +331,11 @@ class Test(unittest.TestCase):
 
         mock_carp_cls.assert_called_once_with(self.args)
         mock_carp.run.assert_called_once()
+
+    def test_vcf_regex(self):
+        self.args.mode = "ideogram"
+        self.args.proband_id = "TwEx2_EX2601743"
+        self.args.inDir = str(self.testData)
+
+        carp = Carp(self.args)
+        self.assertEqual(str(carp.vcfFile), "/mnt/data1/resources/test_data/carp/TwEx2_EX2601743-TwEx2_EX2601744-TwEx2_EX2601745.vcf.gz")
