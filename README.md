@@ -1,5 +1,5 @@
-# :tropical_fish:	 CARP :tropical_fish:	
-# Chromosome Abmormalities Represented in Python
+ 
+![alt text](resources/carp_banner_25pct.png "Chromosomal Anomaly Reports Banner")
 
 ## Respository for plotting:
 - Copy number changes
