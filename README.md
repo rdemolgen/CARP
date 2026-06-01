@@ -1,4 +1,3 @@
- 
 ![alt text](resources/carp_banner_25pct.png "Chromosomal Anomaly Reports Banner")
 
 ## Respository for plotting:
