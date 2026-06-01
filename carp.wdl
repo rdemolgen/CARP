@@ -14,7 +14,7 @@ workflow Carp {
         String outPrefix = ""
         File cytobands = "dx://project-G729Kkj4fq4Q9X1BPy0807bK:file-GGbXZvQ4fq4pKZZ54kQ3QBKB"
         File iscaRegions = "dx://project-G729Kkj4fq4Q9X1BPy0807bK:file-J6PKpK84fq4gqYJV4ff3XKFz"
-        String dockerCarp = "dx://project-G729Kkj4fq4Q9X1BPy0807bK:file-J8G6GzQ4fq4Xg1q8kkg4yjy0"
+        String dockerCarp = "dx://project-G729Kkj4fq4Q9X1BPy0807bK:file-J8Kf8Xj4fq4zfky9V8jX70Qq"
     }
 
     String defaultPrefix = if outPrefix == "" then family else outPrefix

@@ -127,7 +127,7 @@ class Carp:
             else:
                 print(f"Generating ideogram for Chromosome {self.location}")
                 ideogramPlot = Plots.make_chromosome_ideograms(self.samples, sample_genome_baf, dosage_dict, self.location, self.capture)
-                outname = self.outDir / f"{self.prefix}_chr{self.location}_ideogram_{self.date}.png"
+                outname = self.outDir / f"{self.prefix}_chr{self.location}_ideogram_{self.date}.pdf"
                 ideogramPlot.savefig(outname)
                 ideogramPlot.close('all')                                     
 
