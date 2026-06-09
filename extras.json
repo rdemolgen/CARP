@@ -1,0 +1,26 @@
+{
+  "defaultTaskDxAttributes": {
+    "runSpec": {
+        "executionPolicy": {
+          "restartOn": {
+            "*": 3
+          },
+          "maxSpotTries": 3
+        },
+        "timeoutPolicy": {
+          "*": {
+            "hours": 12
+          }
+        },
+        "access": {
+          "project": "CONTRIBUTE",
+          "allProjects": "UPLOAD",
+          "network": [
+            "*"
+          ],
+          "developer": true
+        }
+      }
+  },
+  "delayWorkspaceDestruction": true
+}
